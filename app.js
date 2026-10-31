@@ -210,8 +210,9 @@ $('runbatch').onclick=async()=>{
       $('batchstatus').textContent='Processing '+(i+1)+' of '+files.length+': '+files[i].name;
       await pause();image=await fileImage(files[i]);originalFile=files[i];depth=null;
       const [w,h]=dimensions(image);depth=await inferDepth(files[i],w,h);await render();
-      const blob=await new Promise(resolve=>$('result').toBlob(resolve,'image/png'));
-      if(blob){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=files[i].name.replace(/\.[^.]+$/,'')+'-independent.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+      const isGif=Boolean(animatedBlob);
+      const blob=isGif?animatedBlob:await new Promise(resolve=>$('result').toBlob(resolve,'image/png'));
+      downloadResult(blob,files[i].name.replace(/\.[^.]+$/,'')+'-independent.'+(isGif?'gif':'png'));
     }
     $('batchstatus').textContent='Batch finished. '+files.length+' files processed.';
   }catch(error){$('batchstatus').textContent='Batch stopped: '+error.message}
