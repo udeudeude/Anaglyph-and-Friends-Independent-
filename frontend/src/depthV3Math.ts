@@ -8,6 +8,20 @@ export function v3InputSize(width: number, height: number, longestSide: number):
     return [divisible(width), divisible(height)]
 }
 
+/** Preserve V3 relative depth at float32 precision, with near = 1. */
+export function v3NearValues(depth: ArrayLike<number>, width: number, height: number): Float32Array {
+    if (depth.length !== width * height || width < 1 || height < 1) throw new Error('V3 returned an unexpected depth shape')
+    let minimum = Infinity, maximum = -Infinity
+    for (let i = 0; i < depth.length; i++) {
+        const value = depth[i]
+        if (!Number.isFinite(value)) throw new Error('V3 returned non-finite depth values')
+        minimum = Math.min(minimum, value)
+        maximum = Math.max(maximum, value)
+    }
+    const span = maximum - minimum
+    return Float32Array.from(depth, value => span > 1e-8 ? (maximum - value) / span : 0.5)
+}
+
 export function v3NearPixels(depth: ArrayLike<number>, width: number, height: number): Uint8ClampedArray {
     if (depth.length !== width * height || !width || !height) throw new Error('V3 returned an unexpected depth shape')
     let min = Infinity
