@@ -11,20 +11,20 @@ input[type=range]{width:150px}input[type=file]{max-width:250px}button{border:0;b
 figure{margin:0}figcaption{margin:8px 0;color:#b5c4d3}#status{min-height:25px;color:#c9d6e4}small{color:#aabaca}a{color:#a9dcff}
 </style></head><body>
 <div class="top"><h1>Anaglyph & Friends</h1><span class="tag">Independent Preview · incomplete</span></div>
-<p>New implementation with real AI depth estimation. No code from the Huynh fork is loaded. The legacy application's specialist techniques are not yet all present.</p>
+<p>New implementation with real AI depth estimation. No inherited Huynh source is intentionally loaded. Original post-fork rendering modules are preserved in the companion Python service. The legacy application's specialist techniques are not yet all present.</p>
 <section class="panel"><div class="controls">
 <label>Photograph <input id="photo" type="file" accept="image/*"></label>
 <label>Optional depth map <input id="depthfile" type="file" accept="image/*"></label>
 <label>Depth source <select id="depthsource"><option value="ai">Depth Anything V2 (automatic)</option><option value="uploaded">Uploaded map</option></select></label>
-<label>Output <select id="mode"><option value="anaglyph">Red/cyan anaglyph</option><option value="parallel">Parallel stereo</option><option value="cross">Cross-eyed stereo</option><option value="left">Left eye</option><option value="right">Right eye</option><option value="mask">Gap diagnostic</option></select></label>
+<label>Output <select id="mode"><option value="anaglyph">Red/cyan anaglyph</option><option value="parallel">Parallel stereo</option><option value="cross">Cross-eyed stereo</option><option value="left">Left eye</option><option value="right">Right eye</option><option value="mask">Gap diagnostic</option><option value="chromadepth">ChromaDepth (preserved renderer)</option><option value="autostereogram">Autostereogram (preserved renderer)</option><option value="cardboard">Cardboard viewer (preserved renderer)</option><option value="stereoscope-card">Stereoscope card (preserved renderer)</option><option value="mirror-stereoscope">Mirror stereoscope (preserved renderer)</option><option value="rowinterlaced">Row interlaced (preserved renderer)</option><option value="columninterlaced">Column interlaced (preserved renderer)</option><option value="checkerboard">Checkerboard (preserved renderer)</option><option value="lenticular">Lenticular (preserved renderer)</option></select></label>
 <label>Disparity <span id="displabel">3.0%</span><input id="disp" type="range" min="0" max="12" step=".25" value="3"></label>
 <label>Screen plane <span id="planelabel">0.50</span><input id="plane" type="range" min="0" max="1" step=".02" value=".5"></label>
-<button id="estimate" disabled>Generate AI depth</button><button id="render" disabled>Render</button><button id="save" disabled>Save result</button>
+<button id="estimate" disabled>Generate AI depth</button><button id="serverrender" disabled>Render using preserved engine</button><button id="render" disabled>Render</button><button id="save" disabled>Save result</button>
 </div></section>
 <div id="status" role="status">Choose a photograph. AI depth generation will start automatically.</div>
 <div class="views"><figure><figcaption>Rendered result</figcaption><canvas id="result" width="640" height="400"></canvas></figure>
 <figure><figcaption>Estimated depth · white is near</figcaption><canvas id="depthview" width="640" height="400"></canvas></figure></div>
 <section class="panel"><h2>Batch</h2><p>Process a group of photos with the same technique and settings. Files download individually. Each image receives its own AI depth estimate.</p>
 <input id="batch" type="file" accept="image/*" multiple><button id="runbatch">Process batch</button><div id="batchstatus"></div></section>
-<p><small>Processing is local to your browser. First-use model download may be substantial. This prototype limits processing to 900 px width to avoid excessive memory use on older devices. Results may differ from the Legacy Edition.</small></p>
+<p><small>Basic outputs run in your browser. Advanced preserved formats require the local Python service (README). AI depth is generated in your browser. First-use model download may be substantial. This prototype limits processing to 900 px width to avoid excessive memory use on older devices. Results may differ from the Legacy Edition.</small></p>
 <script type="module" src="./app.js"></script></body></html>
