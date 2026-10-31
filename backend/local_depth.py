@@ -27,7 +27,19 @@ class LocalDepth:
             raise RuntimeError("Local V2 Small weights are missing. Run scripts/install_local_model.py, or use the browser edition.")
         model = DepthAnythingV2(encoder="vits", features=64, out_channels=[48, 96, 192, 384])
         model.load_state_dict(torch.load(weights, map_location="cpu", weights_only=True))
-        self._model = model.eval().to(self._device)
+        model.eval()
+        try:
+            self._model = model.to(self._device)
+        except RuntimeError as error:
+            if self._device != "mps" or "out of memory" not in str(error).lower():
+                raise
+            # MPS can fail during model placement, before inference begins.
+            # Reconstruct on CPU rather than transferring a partially moved model.
+            self._device = "cpu"
+            model = DepthAnythingV2(encoder="vits", features=64,
+                                    out_channels=[48, 96, 192, 384])
+            model.load_state_dict(torch.load(weights, map_location="cpu", weights_only=True))
+            self._model = model.eval()
 
     def generate_depth_map(self, image):
         import torch
