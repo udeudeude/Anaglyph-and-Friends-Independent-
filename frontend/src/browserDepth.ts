@@ -198,9 +198,15 @@ async function createEstimator(progress?: Progress, forceCpu = false) {
 }
 
 function depthToNpy(prediction: DepthPrediction): Blob {
-    const [height, width] = prediction.dims.slice(-2)
-    const bytes = encodeDepthNpy(normalizedPrediction(prediction.data), width, height)
-    return new Blob([bytes], { type: 'application/octet-stream' })
+    try {
+        const [height, width] = prediction.dims.slice(-2)
+        const bytes = encodeDepthNpy(normalizedPrediction(prediction.data), width, height)
+        return new Blob([bytes], { type: 'application/octet-stream' })
+    } finally {
+        // Transformers.js returns an ONNX-backed tensor. Release it after
+        // copying its values to the standalone NPY buffer, including on error.
+        prediction.dispose?.()
+    }
 }
 
 export const hostedBrowserDepthEnabled = () => {
