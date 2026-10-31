@@ -25,3 +25,17 @@ export function encodeDepthNpy(values: Float32Array, width: number, height: numb
     for (let i = 0; i < values.length; i++) view.setFloat32(10 + header.length + i * 4, values[i], true)
     return bytes
 }
+
+/** Copy the prediction into a standalone buffer and release its model tensor. */
+export function encodeDisposablePrediction(prediction: {
+    dims: number[]
+    data: Float32Array
+    dispose?: () => void
+}): Uint8Array {
+    try {
+        const [height, width] = prediction.dims.slice(-2)
+        return encodeDepthNpy(normalizedPrediction(prediction.data), width, height)
+    } finally {
+        prediction.dispose?.()
+    }
+}
