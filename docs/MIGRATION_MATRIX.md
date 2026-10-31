@@ -15,16 +15,16 @@ The user explicitly requires preservation of all original post-fork work and the
 | Physical phantogram projection | Not present | `backend/phantogram_generator.py` | Preserved source; tests pending |
 | Technique regression suite | Not present | `backend/test_technique_generator.py` | Preserved |
 | Phantogram regression suite | Not present | `backend/test_phantogram_generator.py` | Preserved |
-| Automatic browser Depth Anything V2 | Independent model, original app adapter in legacy | `app.js` | Prototype implemented; inference not verified |
+| Automatic browser Depth Anything V2 | Independent model, original app adapter in legacy | `app.js`, `frontend/src/browserDepth.ts` | Original post-fork adapter preserved; prototype inference unverified |
 | Legacy stereo generator | Substantial copied code | None | Do not port; use original renderer |
 | Legacy depth wrapper | Partial shared code | None | Do not port; independently integrate licensed model |
-| Legacy Flask API | Some inherited routes/helpers | None | Must independently replace inherited portions |
+| Legacy Flask API | Some inherited routes/helpers | `backend/server.py` | Independent render API added; incomplete parity |
 | Legacy React upload/editor | Some inherited code | None | Audit and preserve independently developed features |
-| Batch queue, ZIP, depth maps | Developed after fork | Prototype partial | Must restore full feature parity |
-| 17 techniques, print workflows | Developed after fork | Backend preserved, UI incomplete | Must restore complete UI and export integration |
+| Batch queue, ZIP, depth maps | Developed after fork | `frontend/src/batchProcessing.ts`; prototype partial | Original batch logic preserved; integration incomplete |
+| 17 techniques, print workflows | Developed after fork | Backend API plus `frontend/src/viewMasterPdf.ts`, `phantogramDiagnosticSheet.ts`; UI incomplete | Original post-fork modules preserved; integration incomplete |
 | Mac offline packaging | Developed after fork | Not yet | Preserve after provenance/dependency review |
 
-## Release gate
+## Additional preserved original frontend modules\n\n`frontend/src/browserDepthV3.ts`, `frontend/src/depthGenerators.ts`, and `frontend/src/screenDepth.ts` have been preserved alongside the V2 adapter, batch, View-Master, and phantogram modules. These were absent at corresponding paths in the inspected upstream repository. They are not yet all connected to the independent application.\n\n## Release gate
 
 The prototype is **not a replacement** until real-model inference, all techniques, original editing tools, batch exports, offline Mac packaging, and visual parity have been verified. Keep the Legacy Edition untouched.
 
