@@ -1,0 +1,187 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { MouseEvent as ReactMouseEvent } from 'react'
+import { parseModelFile, renderModelPhantogram, type ModelMesh } from './modelPhantogram'
+import { renderPhantogramDiagnosticSheet } from './phantogramDiagnosticSheet'
+import { renderGroundPlaneReferencePdf, REFERENCE_HEIGHT_IN, REFERENCE_WIDTH_IN } from './groundPlaneReference'
+import './styles/PhantogramBuilder.css'
+import UiIcon from './UiIcon'
+
+type ProcessingStage = 'idle' | 'uploading' | 'depth' | 'stereo' | 'technique' | 'full' | 'ready' | 'error'
+type Glasses = 'red-cyan' | 'red-green' | 'red-blue'
+type SourceMode = 'relief' | 'groundplane' | 'model'
+type PlanePoint = [number, number]
+type PlaneCorner = PlanePoint | null
+
+type Props = { isDepthMapReady: boolean; sourceFile: File | null; setProcessingStage: (stage: ProcessingStage) => void }
+type Settings = {
+    dpi: number; widthIn: number; heightIn: number; viewDistanceIn: number; eyeHeightIn: number; ipdMm: number; reliefMm: number; glasses: Glasses; reverseDepth: boolean; colorMode: 'luminance' | 'color'
+    rotateX: number; rotateY: number; rotateZ: number; footprintPct: number
+}
+const defaults: Settings = { dpi: 300, widthIn: 8, heightIn: 6, viewDistanceIn: 20, eyeHeightIn: 14, ipdMm: 63, reliefMm: 35, glasses: 'red-cyan', reverseDepth: false, colorMode: 'luminance', rotateX: 0, rotateY: 0, rotateZ: 0, footprintPct: 72 }
+const loadSettings = (): Settings => { try { return { ...defaults, ...JSON.parse(localStorage.getItem('aaf-phantogram-settings') || '{}') } } catch { return defaults } }
+
+const emptyPlaneCorners = (): PlaneCorner[] => [null, null, null, null]
+
+function PhantogramBuilder({ isDepthMapReady, sourceFile, setProcessingStage }: Props) {
+    const apiUrl = import.meta.env.VITE_FLASK_BACKEND_API_URL || 'http://localhost:8000'
+    const modelInputRef = useRef<HTMLInputElement>(null)
+    const [sourceMode, setSourceMode] = useState<SourceMode>('relief')
+    const [settings, setSettings] = useState<Settings>(loadSettings)
+    const [model, setModel] = useState<ModelMesh | null>(null)
+    const [modelInfo, setModelInfo] = useState('')
+    const [diagnostic, setDiagnostic] = useState(false)
+    const [sweep, setSweep] = useState<'height' | 'distance'>('height')
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [downloading, setDownloading] = useState(false)
+    const [error, setError] = useState('')
+    const [sourceUrl, setSourceUrl] = useState<string | null>(null)
+    const [planeCorners, setPlaneCorners] = useState<PlaneCorner[]>(emptyPlaneCorners)
+    const [activeCorner, setActiveCorner] = useState(0)
+
+    const params = useMemo(() => new URLSearchParams({ dpi: String(settings.dpi), width_in: String(settings.widthIn), height_in: String(settings.heightIn), view_distance_in: String(settings.viewDistanceIn), eye_height_in: String(settings.eyeHeightIn), ipd_mm: String(settings.ipdMm), relief_mm: String(settings.reliefMm), glasses: settings.glasses, color_mode: settings.colorMode, reverse_depth: String(settings.reverseDepth), ground_plane: String(sourceMode === 'groundplane'), plane_corners: JSON.stringify(planeCorners) }), [settings, sourceMode, planeCorners])
+    const modelSettings = useMemo(() => ({ widthIn: settings.widthIn, heightIn: settings.heightIn, dpi: settings.dpi, viewDistanceIn: settings.viewDistanceIn, eyeHeightIn: settings.eyeHeightIn, ipdMm: settings.ipdMm, reliefMm: settings.reliefMm, glasses: settings.glasses, rotateX: settings.rotateX, rotateY: settings.rotateY, rotateZ: settings.rotateZ, footprintPct: settings.footprintPct }), [settings])
+    const ready = sourceMode === 'model' ? diagnostic || !!model : sourceMode === 'groundplane' ? isDepthMapReady && !!sourceFile && planeCorners.every(point => point !== null) : isDepthMapReady
+    const presetValue = settings.widthIn === 8 && settings.heightIn === 6 ? '8x6' : settings.widthIn === 10 && settings.heightIn === 7.5 ? '10x7.5' : settings.widthIn === 7 && settings.heightIn === 5 ? '7x5' : 'custom'
+    const glassesLabel: Record<Glasses, string> = { 'red-cyan': 'Red / Cyan', 'red-green': 'Red / Green', 'red-blue': 'Red / Blue' }
+
+    useEffect(() => { localStorage.setItem('aaf-phantogram-settings', JSON.stringify(settings)) }, [settings])
+    useEffect(() => {
+        if (!sourceFile) {
+            setSourceUrl(old => { if (old) URL.revokeObjectURL(old); return null })
+            return
+        }
+        const next = URL.createObjectURL(sourceFile)
+        setSourceUrl(old => { if (old) URL.revokeObjectURL(old); return next })
+        setPlaneCorners(emptyPlaneCorners())
+        setActiveCorner(0)
+        return () => URL.revokeObjectURL(next)
+    }, [sourceFile])
+    useEffect(() => {
+        if (!ready) { setPreviewUrl(old => { if (old) URL.revokeObjectURL(old); return null }); return }
+        const controller = new AbortController()
+        const timer = window.setTimeout(async () => {
+            setLoading(true); setError(''); setProcessingStage('technique')
+            try {
+                let blob: Blob
+                if (sourceMode === 'model') {
+                    if (diagnostic) blob = renderPhantogramDiagnosticSheet(modelSettings, sweep, 'svg')
+                    else {
+                        if (!model) return
+                        blob = (await renderModelPhantogram(model, modelSettings, 'preview')).blob
+                    }
+                } else {
+                    const response = await fetch(`${apiUrl}/special/phantogram?scope=preview&${params.toString()}`, { credentials: 'include', signal: controller.signal })
+                    if (!response.ok) {
+                        const detail = await response.json().catch(() => ({})) as { error?: string }
+                        throw new Error(detail.error || `Preview failed with status ${response.status}`)
+                    }
+                    blob = await response.blob()
+                }
+                if (controller.signal.aborted) return
+                const url = URL.createObjectURL(blob)
+                setPreviewUrl(old => { if (old) URL.revokeObjectURL(old); return url }); setProcessingStage('ready')
+            } catch (caught) {
+                if (controller.signal.aborted) return
+                console.error(caught); setError(caught instanceof Error ? caught.message : 'Could not render the phantogram preview.'); setProcessingStage('error')
+            } finally { if (!controller.signal.aborted) setLoading(false) }
+        }, sourceMode === 'model' ? 180 : 280)
+        return () => { window.clearTimeout(timer); controller.abort() }
+    }, [apiUrl, ready, sourceMode, model, diagnostic, sweep, modelSettings, params, setProcessingStage])
+
+    const patch = (values: Partial<Settings>) => setSettings(current => ({ ...current, ...values }))
+    const setGroundPlaneCorner = (event: ReactMouseEvent<HTMLDivElement>) => {
+        const rect = event.currentTarget.getBoundingClientRect()
+        const point: PlanePoint = [
+            Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))),
+            Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height))),
+        ]
+        setPlaneCorners(current => current.map((item, index) => index === activeCorner ? point : item))
+        setActiveCorner(current => (current + 1) % 4)
+    }
+    const setPreset = (value: string) => { if (value === '8x6') patch({ widthIn: 8, heightIn: 6 }); if (value === '10x7.5') patch({ widthIn: 10, heightIn: 7.5 }); if (value === '7x5') patch({ widthIn: 7, heightIn: 5 }) }
+    const downloadGroundPlaneReference = () => {
+        const url = URL.createObjectURL(renderGroundPlaneReferencePdf())
+        const link = document.createElement('a')
+        link.href = url; link.download = 'phantogram-ground-plane-reference-letter.pdf'
+        document.body.appendChild(link); link.click(); link.remove()
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+        patch({ widthIn: REFERENCE_WIDTH_IN, heightIn: REFERENCE_HEIGHT_IN })
+    }
+    const loadModel = async (file: File) => {
+        setLoading(true); setError(''); setProcessingStage('uploading')
+        try {
+            const parsed = await parseModelFile(file)
+            setModel(parsed); setDiagnostic(false); setModelInfo(`${file.name} · ${parsed.triangles.length.toLocaleString()} triangles`); setSourceMode('model'); setProcessingStage('ready')
+        } catch (caught) { console.error(caught); setError(caught instanceof Error ? caught.message : 'Could not read 3D model.'); setProcessingStage('error') }
+        finally { setLoading(false) }
+    }
+    const download = async () => {
+        if (!ready || downloading) return
+        setDownloading(true); setError(''); setProcessingStage('full')
+        try {
+            let blob: Blob
+            if (sourceMode === 'model') {
+                if (diagnostic) blob = renderPhantogramDiagnosticSheet(modelSettings, sweep, 'pdf')
+                else {
+                    if (!model) return
+                    blob = (await renderModelPhantogram(model, modelSettings, 'full')).blob
+                }
+            } else {
+                const response = await fetch(`${apiUrl}/special/phantogram?scope=full&${params.toString()}`, { credentials: 'include' })
+                if (!response.ok) {
+                    const detail = await response.json().catch(() => ({})) as { error?: string }
+                    throw new Error(detail.error || `Download failed with status ${response.status}`)
+                }
+                blob = await response.blob()
+            }
+            const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = sourceMode === 'model' && diagnostic ? `phantogram-wireframe-${sweep}-letter-landscape.pdf` : `phantogram-${sourceMode === 'model' ? '3d-model-' : sourceMode === 'groundplane' ? 'ground-plane-' : ''}${settings.glasses}-${settings.widthIn}x${settings.heightIn}in.png`; document.body.appendChild(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000); setProcessingStage('ready')
+        } catch (caught) { console.error(caught); setError(caught instanceof Error ? caught.message : 'Could not create the full-resolution phantogram.'); setProcessingStage('error') }
+        finally { setDownloading(false) }
+    }
+
+    return <main className="phantogramWorkspace">
+        <section className="phantogramIntro"><div><div className="panelLabel">PHYSICAL PRINT</div><h2>Phantogram</h2><p>Projects physical 3D geometry independently from two eye positions onto a flat print plane. Import a model or print a wireframe comparison sheet; a single photograph and AI depth give an approximate height-field study.</p></div><div className="phantogramBadge">EXPERIMENTAL · GEOMETRIC</div></section>
+
+        <section className="phantogramViewingAid"><div><span className="panelLabel">VIEWING SETUP · FOR ANY PHANTOGRAM</span><strong>Find a comfortable viewing position</strong><p>Print the hollow cube and two tetrahedrons at three labeled eye positions on one sheet. Use it to explore height or distance before making your own phantogram.</p></div><button onClick={() => { setSourceMode('model'); setDiagnostic(true); setError('') }}>Open wireframe comparison</button></section>
+
+        <div className="phantogramSourceMode"><button className={sourceMode === 'relief' ? 'active' : ''} onClick={() => setSourceMode('relief')}><strong>Image + depth map</strong><span>Approximate height field from the current Studio source</span></button><button className={sourceMode === 'groundplane' ? 'active' : ''} onClick={() => setSourceMode('groundplane')}><strong>Marked ground plane</strong><span>Print a reference rectangle or mark one already in a photo</span></button><button className={sourceMode === 'model' ? 'active' : ''} onClick={() => setSourceMode('model')}><strong>3D model</strong><span>Import GLB, OBJ, or STL geometry</span></button></div>
+
+        {sourceMode === 'relief' && !isDepthMapReady && <div className="phantogramNotice"><strong>No current source + depth map.</strong><span>Load an image in 3D Studio first. Phantogram uses that source and whichever AI or imported depth map is active.</span></div>}
+        {sourceMode === 'groundplane' && (!isDepthMapReady || !sourceFile) && <div className="phantogramNotice"><strong>Ground-plane mode needs the current image + depth map.</strong><span>Load a single image in 3D Studio, then mark the four corners of a rectangular physical plane visible in that photograph.</span></div>}
+        {sourceMode === 'groundplane' && <section className="groundPlaneReference"><div><span className="panelLabel">OPTIONAL PHOTO REFERENCE</span><strong>Print an 8 × 6 inch rectangle for the photograph</strong><p>Print the Letter PDF at Actual Size and check its 50 mm rule. Set the sheet flat, place the object inside the border without covering its four corners, and photograph it with all corners visible. Load that photo in Studio, generate or import a depth map, then mark corners 1–4 below. Downloading sets the print area to 8 × 6 inches.</p><small>The border establishes the flat plane and its scale. A single photo and relative depth map still cannot measure the object’s height or recover the camera position, so this remains an approximate relief study.</small></div><button onClick={downloadGroundPlaneReference}><UiIcon name="download" /> Download reference PDF</button></section>}
+        {sourceMode === 'groundplane' && sourceUrl && <section className="groundPlanePicker">
+            <div className="groundPlanePickerHeader"><div><span className="panelLabel">GROUND PLANE</span><strong>Mark the rectangle in perspective</strong></div><button onClick={() => { setPlaneCorners(emptyPlaneCorners()); setActiveCorner(0) }}><UiIcon name="reset" /> Clear corners</button></div>
+            <p>Mark all four real corners before rendering: 1 far-left, 2 far-right, 3 near-right, 4 near-left. No rectangle is assumed. The plane is rectified to the full print; heights inferred from a single photo remain approximate.</p>
+            <div className="groundPlaneCornerButtons">{planeCorners.map((point, index) => <button key={index} className={activeCorner === index ? 'active' : ''} onClick={() => setActiveCorner(index)}>Corner {index + 1}{point ? ' ✓' : ''}</button>)}</div>
+            <div className="groundPlaneImage" onClick={setGroundPlaneCorner}>
+                <img src={sourceUrl} alt="Source for ground-plane selection" draggable={false}/>
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                    {planeCorners.every(point => point !== null) && <polygon points={planeCorners.map(point => `${point![0] * 100},${point![1] * 100}`).join(' ')} />}
+                    {planeCorners.map((point, index) => point && <g key={index}><circle cx={point[0] * 100} cy={point[1] * 100} r="1.8"/><text x={point[0] * 100} y={point[1] * 100} dx="2" dy="-2">{index + 1}</text></g>)}
+                </svg>
+            </div>
+            <div className="phantogramNotice"><strong>Physical meaning</strong><span>The four marked points must bound a real, flat rectangle. Enter its actual dimensions as the print dimensions below. This alone does not recover the photographed camera or an object’s true height.</span></div>
+        </section>}
+        {sourceMode === 'model' && <div className="phantogramModelSource"><div><strong>{diagnostic ? 'Wireframe comparison sheet' : model ? '3D model loaded' : 'Import a 3D model'}</strong><span>{diagnostic ? 'A hollow cube and two tetrahedrons in three viewing setups on one US Letter sheet.' : modelInfo || 'Import GLB 2.0, OBJ, and binary/ASCII STL geometry.'}</span></div><div className="phantogramModelActions">{diagnostic && model && <button onClick={() => setDiagnostic(false)}>Use loaded model</button>}<button onClick={() => modelInputRef.current?.click()}><UiIcon name="upload" /> {model && !diagnostic ? 'Replace model' : 'Choose 3D model'}</button></div><input ref={modelInputRef} type="file" accept=".glb,.obj,.stl,model/gltf-binary,model/stl" onChange={event => { const file = event.target.files?.[0]; event.currentTarget.value = ''; if (file) void loadModel(file) }}/></div>}
+        {sourceMode === 'model' && diagnostic && <div className="phantogramNotice"><strong>Compare one viewing variable at a time</strong><span>Each column contains the same hollow cube, point-near tetrahedron, and face-near tetrahedron. Choose eye height or distance; the columns use 80%, your entered value, and 120% of it. Keep your eyes centered over the whole sheet.</span><label>Compare <select value={sweep} onChange={event => setSweep(event.target.value as 'height' | 'distance')}><option value="height">Eye height</option><option value="distance">Distance beyond near edge</option></select></label></div>}
+
+        <div className="phantogramGrid">
+            <section className="phantogramControls">
+                <div className="phantogramControlHeader"><div><span className="panelLabel">PRINT GEOMETRY</span><strong>Physical setup</strong></div>{diagnostic && sourceMode === 'model' ? <span>US Letter · 11 × 8.5 in</span> : <select value={presetValue} onChange={e => setPreset(e.target.value)} aria-label="Print size preset"><option value="8x6">8 × 6 in</option><option value="10x7.5">10 × 7.5 in</option><option value="7x5">7 × 5 in</option><option value="custom">Custom</option></select>}</div>
+                <p className="phantogramSetupNote">These starting numbers are examples, not measurements of your viewing position. {diagnostic && sourceMode === 'model' ? 'The comparison PDF has a fixed US Letter landscape page size. Enter your eye position and check its 50 mm ruler after printing.' : 'Enter the intended print size and your eye position before making a physical print.'}</p>
+                <div className="phantogramFields">
+                    {!(diagnostic && sourceMode === 'model') && <><label><span>Print width</span><input type="number" min="2" max="16" step="0.1" value={settings.widthIn} onChange={e => patch({ widthIn: Number(e.target.value) || 8 })}/><small>in</small></label><label><span>Print height</span><input type="number" min="2" max="16" step="0.1" value={settings.heightIn} onChange={e => patch({ heightIn: Number(e.target.value) || 6 })}/><small>in</small></label><label><span>Final print resolution</span><select value={settings.dpi} onChange={e => patch({ dpi: Number(e.target.value) })}><option value="150">150 DPI</option><option value="300">300 DPI</option><option value="600">600 DPI · slower</option></select></label></>}
+                    <label><span>Glasses</span><select value={settings.glasses} onChange={e => patch({ glasses: e.target.value as Glasses })}><option value="red-cyan">Red / Cyan</option><option value="red-green">Red / Green</option><option value="red-blue">Red / Blue</option></select></label>
+                    <label><span>Eyes beyond near edge</span><input type="number" min="4" max="72" step="0.5" value={settings.viewDistanceIn} onChange={e => patch({ viewDistanceIn: Number(e.target.value) || 20 })}/><small>in</small></label><label><span>Eye height above print</span><input type="number" min="4" max="72" step="0.5" value={settings.eyeHeightIn} onChange={e => patch({ eyeHeightIn: Number(e.target.value) || 14 })}/><small>in</small></label>
+                    <label><span>Eye separation</span><input type="number" min="45" max="80" step="0.5" value={settings.ipdMm} onChange={e => patch({ ipdMm: Number(e.target.value) || 63 })}/><small>mm</small></label><label><span>{diagnostic && sourceMode === 'model' ? 'Maximum wireframe height' : sourceMode === 'model' ? 'Maximum model height' : 'Maximum apparent relief'}</span><input type="number" min="0" max="100" step="1" value={settings.reliefMm} onChange={e => patch({ reliefMm: Number(e.target.value) || 0 })}/><small>mm</small></label>
+                </div>
+                {sourceMode !== 'model' ? <><label className="phantogramToggle"><input type="checkbox" checked={settings.reverseDepth} onChange={e => patch({ reverseDepth: e.target.checked })}/><span><strong>Reverse depth</strong><small>Use if the result appears carved into the page instead of rising from it.</small></span></label><details className="phantogramAdvanced"><summary>Anaglyph color options</summary><label><span>Image channels</span><select value={settings.colorMode} onChange={e => patch({ colorMode: e.target.value as Settings['colorMode'] })}><option value="luminance">Grayscale for both eyes (recommended)</option><option value="color">Original color channels (experimental)</option></select></label><small>Strongly colored objects can vanish from one eye with original color channels. Grayscale retains their shape through both filters.</small></details></> : !diagnostic && <div className="phantogramModelControls"><div className="panelLabel">MODEL ON PRINT PLANE</div><div className="phantogramFields"><label><span>Maximum footprint</span><input type="number" min="10" max="100" step="1" value={settings.footprintPct} onChange={e => patch({ footprintPct: Number(e.target.value) || 72 })}/><small>%</small></label><label><span>Rotate X</span><input type="number" step="5" value={settings.rotateX} onChange={e => patch({ rotateX: Number(e.target.value) || 0 })}/><small>°</small></label><label><span>Rotate Y</span><input type="number" step="5" value={settings.rotateY} onChange={e => patch({ rotateY: Number(e.target.value) || 0 })}/><small>°</small></label><label><span>Rotate Z</span><input type="number" step="5" value={settings.rotateZ} onChange={e => patch({ rotateZ: Number(e.target.value) || 0 })}/><small>°</small></label></div><p>One scale preserves the model’s width, depth, and height. The height and footprint are upper limits; fitting both eye views on the paper may make the whole model smaller. Its lowest point touches the paper.</p></div>}
+                {!(sourceMode === 'model' && diagnostic) && <div className="phantogramPrintCheck"><div><strong>Print calibration</strong><span>Print the ruler first and confirm the 100 mm marks physically measure 100 mm.</span></div><a href={`${apiUrl}/phantogram/calibration?dpi=${settings.dpi}`}><UiIcon name="download" /> Download 100 mm ruler</a></div>}
+            </section>
+
+            <section className="phantogramPreviewCard"><div className="phantogramPreviewHeader"><div><span className="panelLabel">FLAT PRINT ARTWORK</span><strong>{glassesLabel[settings.glasses]} · {sourceMode === 'model' ? diagnostic ? 'wireframe comparison' : '3D geometry' : sourceMode === 'groundplane' ? 'marked ground plane' : 'image relief study'}</strong></div><span>{loading ? 'Rendering…' : ready ? 'Ready' : sourceMode === 'groundplane' && sourceFile ? 'Mark four corners' : 'Waiting for source'}</span></div><div className="phantogramPreview">{previewUrl ? <img src={previewUrl} alt="Flat phantogram print artwork" onError={() => { setError('The preview image could not be displayed. You can still download the print file.'); setPreviewUrl(old => { if (old) URL.revokeObjectURL(old); return null }) }}/> : <div><strong>Phantogram preview</strong><span>{sourceMode === 'model' ? 'Open the wireframe comparison above or import a model.' : sourceMode === 'groundplane' ? 'Mark four real corners to make a print.' : 'The deliberately distorted print image will appear here.'}</span></div>}</div><div className="phantogramViewDiagram" aria-label="Viewing geometry diagram"><div className="eyes">● ●</div><div className="sightLines">╲ ╱</div><div className="paperLine"/><span>Lay print flat · bottom edge of image nearest your eyes</span></div>{error && <div className="phantogramError">{error}</div>}<button className="phantogramDownload" disabled={!ready || downloading} onClick={() => void download()}>{downloading ? 'Preparing print…' : <><UiIcon name="download" /> {sourceMode === 'model' && diagnostic ? 'Download US Letter PDF' : 'Download print-ready PNG'}</>}</button><p className="phantogramFinePrint">The on-screen preview shows the artwork lying flat, not the view from the intended eye position. Print at <strong>100% / Actual Size</strong>, never Fit to Page. {sourceMode === 'model' && diagnostic ? 'The vector PDF includes a 50 mm check rule. Viewing settings are illustrative until physically checked; no AI depth estimate is needed for these known shapes.' : sourceMode === 'model' ? 'The PNG contains physical DPI metadata. Imported mesh geometry is projected directly; no AI depth estimation is used.' : sourceMode === 'groundplane' ? 'The PNG contains physical DPI metadata. The marked plane is rectified, but a single image does not reveal true 3D geometry.' : 'The PNG contains physical DPI metadata. A photo and relative depth map approximate a height field, not a measured 3D scene.'}</p></section>
+        </div>
+    </main>
+}
+export default PhantogramBuilder
