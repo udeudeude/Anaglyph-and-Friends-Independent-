@@ -18,13 +18,13 @@ function errorText(error: unknown): string {
     return error instanceof Error ? error.message : String(error)
 }
 
-async function createSession(progress?: Progress) {
+async function createSession(progress?: Progress, forceCpu = false) {
     if (!sessionPromise) sessionPromise = (async () => {
         const options = {
             externalData: [{ path: 'model.onnx_data', data: EXTERNAL_URL }],
         }
         let gpuFailure: unknown
-        if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
+        if (!forceCpu && typeof navigator !== 'undefined' && 'gpu' in navigator) {
             progress?.('Loading Depth Anything V3 model (about 105 MB on first use)…')
             try {
                 return { session: await ort.InferenceSession.create(MODEL_URL, {
@@ -83,33 +83,55 @@ async function imageTensor(file: File, longestSide: number): Promise<{ tensor: o
 
 
 export async function generateV3Depth(file: File, progress?: Progress, generator = 'Depth Anything V3 Small') {
-    const { session, engine } = await createSession(progress)
+    let { session, engine } = await createSession(progress)
+
+    async function infer(activeSession: ort.InferenceSession, activeEngine: Engine) {
+        let input: Awaited<ReturnType<typeof imageTensor>>
+        try {
+            input = await imageTensor(file, activeEngine === 'WebGPU' ? 504 : 252)
+        } catch (error) {
+            throw new BrowserDepthError('inference', 'V3 could not read the source image', error)
+        }
+        try {
+            const result = await activeSession.run({ pixel_values: input.tensor })
+            return { result, width: input.width, height: input.height }
+        } finally {
+            input.tensor.dispose()
+        }
+    }
+
     progress?.(`Estimating depth on this device (${engine})…`)
-    let input: Awaited<ReturnType<typeof imageTensor>>
+    let prediction: Awaited<ReturnType<typeof infer>>
     try {
-        input = await imageTensor(file, engine === 'WebGPU' ? 504 : 252)
+        prediction = await infer(session, engine)
     } catch (error) {
-        throw new BrowserDepthError('inference', 'V3 could not read the source image', error)
+        if (engine !== 'WebGPU') {
+            throw new BrowserDepthError('inference', 'V3 browser CPU inference failed', error)
+        }
+        progress?.('V3 GPU inference failed · retrying with browser CPU…')
+        sessionPromise = null
+        try { await session.release() } catch (releaseError) {
+            console.warn('Could not release failed V3 GPU session', releaseError)
+        }
+        try {
+            ({ session, engine } = await createSession(progress, true))
+            prediction = await infer(session, engine)
+        } catch (cpuError) {
+            throw new BrowserDepthError('inference', 'V3 GPU and CPU inference both failed', cpuError)
+        }
     }
-    let result: ort.InferenceSession.OnnxValueMapType
+
     try {
-        result = await session.run({ pixel_values: input.tensor })
-    } catch (error) {
-        throw new BrowserDepthError('inference', 'V3 inference failed after the model loaded', error)
-    } finally {
-        input.tensor.dispose()
-    }
-    try {
-        const depth = result.predicted_depth
-        if (!depth || depth.dims.join(',') !== `1,1,${input.height},${input.width}`) {
+        const depth = prediction.result.predicted_depth
+        if (!depth || depth.dims.join(',') !== `1,1,${prediction.height},${prediction.width}`) {
             throw new Error(`Unexpected V3 output dimensions: ${depth?.dims}`)
         }
-        const near = v3NearValues(depth.data as Float32Array, input.width, input.height)
-        const bytes = encodeDepthNpy(near, input.width, input.height)
+        const near = v3NearValues(depth.data as Float32Array, prediction.width, prediction.height)
+        const bytes = encodeDepthNpy(near, prediction.width, prediction.height)
         return { file: new File([bytes], 'browser-depth-anything-v3.npy', { type: 'application/octet-stream' }), engine, generator }
     } catch (error) {
         throw new BrowserDepthError('output', 'V3 depth output could not be encoded at float32 precision', error)
     } finally {
-        for (const output of Object.values(result)) output.dispose()
+        for (const output of Object.values(prediction.result)) output.dispose()
     }
 }
