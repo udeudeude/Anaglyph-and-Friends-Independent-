@@ -1,7 +1,7 @@
 import { AUTOMATIC_DEPTH_GENERATOR, resolveDepthGenerator } from './depthGenerators'
 import type { DepthGeneratorSelection } from './depthGenerators'
 
-import { normalizedPrediction, encodeDepthNpy } from './depthPrecision'
+import { encodeDisposablePrediction } from './depthPrecision'
 const MODEL_REVISION = '4472b7362082ad9968fee890ca0f1e5aca36b93d'
 const MODEL_ID = 'onnx-community/depth-anything-v2-small'
 
@@ -198,15 +198,7 @@ async function createEstimator(progress?: Progress, forceCpu = false) {
 }
 
 function depthToNpy(prediction: DepthPrediction): Blob {
-    try {
-        const [height, width] = prediction.dims.slice(-2)
-        const bytes = encodeDepthNpy(normalizedPrediction(prediction.data), width, height)
-        return new Blob([bytes], { type: 'application/octet-stream' })
-    } finally {
-        // Transformers.js returns an ONNX-backed tensor. Release it after
-        // copying its values to the standalone NPY buffer, including on error.
-        prediction.dispose?.()
-    }
+    return new Blob([encodeDisposablePrediction(prediction)], { type: 'application/octet-stream' })
 }
 
 export const hostedBrowserDepthEnabled = () => {
