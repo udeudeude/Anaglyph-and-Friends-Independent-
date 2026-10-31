@@ -57,6 +57,8 @@ jobs:
       - name: Get pinned V2 Small code and verified weights
         run: python scripts/install_local_model.py
       - name: Verify local inference on a real photograph
+        env:
+          AAF_TORCH_DEVICE: cpu
         run: python scripts/verify_real_inference.py
       - name: Freeze app with Python, local V2 and frontend
         run: |
