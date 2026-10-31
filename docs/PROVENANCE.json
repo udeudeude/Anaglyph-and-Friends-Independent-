@@ -1,0 +1,692 @@
+{
+  "legacy": "c4e698d2cf4610964408c0ff69a71f8735d406e8",
+  "upstream_ancestor": "c13f1889997ca5a994b0781575d355fa3f610e2e",
+  "files": [
+    {
+      "path": "frontend/src/StereoPairEditor.tsx",
+      "legacy_blob": "366cdd8b39e882b48ccdd51fb5da4dc5d0159d8c",
+      "first_commit": "a0dd6f2ba8d85c114ed47f6635efccd65d35043f|udeudeude|Unify Studio sources and View-Master handoff",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/screenDepth.ts",
+      "legacy_blob": "4d94daf491863f04e947667f5720babeba606b23",
+      "first_commit": "9ded36023832983c9bf2f91710e3b616e4d512c2|udeudeude|Improve stereo reconstruction and add subject screen-depth selection",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/PrintPageBuilder.tsx",
+      "legacy_blob": "1e915fe1ad109fc563e983422cee75049e46b98d",
+      "first_commit": "2f33c3792539c602ff328725de98d10aba73fb8d|udeudeude|Advance pre-print workflow: viewer profiles, print pages, depth selections, and digital-format guidance (#23)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/techniques.ts",
+      "legacy_blob": "9c46b0f84c48980086153055d2acfda7e492ff13",
+      "first_commit": "08032b2e03a59cf46e0c65da75ae7342923349f3|udeudeude|Define technique presets and conditional settings",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/phantogramDiagnosticSheet.test.mjs",
+      "legacy_blob": "25df80164508d6183417225a11d73b962bb22b97",
+      "first_commit": "3b6a4f0d325b4007c0fe49f65075477cfa60640f|udeudeude|Add printable phantogram wireframe comparison sheet",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/LayeredCompositeBuilder.tsx",
+      "legacy_blob": "ca1ff756e424b871d4d5f14b894c7b71c2d041ac",
+      "first_commit": "0ec9008db878d8f0f14b6a8618ad357bfb18aec7|udeudeude|Add layered 3D foreground compositing (#17)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/viewMasterCrop.test.mjs",
+      "legacy_blob": "30c6cb70a68290ad8057267e87b75d8143b5983a",
+      "first_commit": "4108a071b6695c33e3eb415d9a276987853547cc|udeudeude|Add per-scene View-Master crop positioning",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/depthV3Math.ts",
+      "legacy_blob": "ceaa7d55bdf5405ca5713a0252dadf981f540020",
+      "first_commit": "6dc202fe26dae725b6e231195579ab6a1bbd4fde|udeudeude|Add optional browser Depth Anything V3 Small adapter (#27)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/viewMasterCrop.ts",
+      "legacy_blob": "eb9ac6e0cfae0b774f68ee9e88925c342d18a3ec",
+      "first_commit": "4108a071b6695c33e3eb415d9a276987853547cc|udeudeude|Add per-scene View-Master crop positioning",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/stereoPairRender.ts",
+      "legacy_blob": "1d60422635b7b5c4a935521234ca08527ef87b61",
+      "first_commit": "a0dd6f2ba8d85c114ed47f6635efccd65d35043f|udeudeude|Unify Studio sources and View-Master handoff",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/viewMasterPdf.ts",
+      "legacy_blob": "5608acb743fd143e213575435dbc22be397ebf12",
+      "first_commit": "3a4f9c4d37cf319872c33c46256c7f5979ce688a|udeudeude|Add native View-Master PDF exporter",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/screenDepth.test.mjs",
+      "legacy_blob": "c9c6295a9d9ccecd07cdf4d5dc82c130e7ef151a",
+      "first_commit": "9ded36023832983c9bf2f91710e3b616e4d512c2|udeudeude|Improve stereo reconstruction and add subject screen-depth selection",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/ViewMasterBuilder.tsx",
+      "legacy_blob": "3953c8495da189df1eed0c8906b02bf0446ef2e6",
+      "first_commit": "9481d0f8abfcef0810c46ecfb7ac514afa7b3c9c|udeudeude|Begin View-Master reel builder",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/PolarizedProjection.tsx",
+      "legacy_blob": "d9f8347408df691877e765292fef9b3ddc18d12e",
+      "first_commit": "4dc706c1795183640cd0ee8f024f92ace5db8e61|udeudeude|Add polarized dual-projector workspace",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/ImageUpload.tsx",
+      "legacy_blob": "dca7149876beb5dca3585939f4e2d2a2a3926576",
+      "first_commit": "fa3e5cf2cb1479f7bb5292c47183d68f9e0c69a3|Duy Huynh|started website",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/src/layeredTransparency.ts",
+      "legacy_blob": "9dc7d03adbe6c162fdd82fd5e422b3633502cf88",
+      "first_commit": "6532c9ff59e740920384806a86d8a206168d6d22|udeudeude|Add depth-sliced layered transparency print workflow",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/UiIcon.tsx",
+      "legacy_blob": "3b52e1caf4cbe8119d859044b01f6e93f8e73889",
+      "first_commit": "681d8c3522a1bf69b507625eff341cbc7973274b|udeudeude|Expand depth editing, add standard shortcuts, and add restrained action icons (#22)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/groundPlaneReference.test.mjs",
+      "legacy_blob": "a0d49d676e5bd8d48e5ead69ca917062bc4c1a19",
+      "first_commit": "0a694ded0377f3b1687e55ad2833c41c03a06229|udeudeude|Fix phantogram preview and add printable ground plane reference",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/browserDepthV3.ts",
+      "legacy_blob": "5f11800ef6d9b0de355d654804875a70ef7c693f",
+      "first_commit": "6dc202fe26dae725b6e231195579ab6a1bbd4fde|udeudeude|Add optional browser Depth Anything V3 Small adapter (#27)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/TechniqueControls.tsx",
+      "legacy_blob": "76d7eaa9ec9e8b46eb80148c534e6d31c5f33e7b",
+      "first_commit": "dfd7f64452277856d8a826f7cad6c8fa0b2fd102|udeudeude|Add conditional technique configuration panels",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/batchProcessing.test.mjs",
+      "legacy_blob": "c23dd1c0c4cebbbfa38dbc9405b19b7792808902",
+      "first_commit": "44965e8d7f77e0b8e54dc39676f64e2887879925|udeudeude|Add batch photo workspace with captured settings and optional depth maps",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/DepthGeneratorSelector.tsx",
+      "legacy_blob": "510e66108cf734b19377208d81e48a6ff91073a2",
+      "first_commit": "6aaaf9aabeba5129d58a30012e6edd0a064ce1a9|udeudeude|Establish verified depth generator selection (#26)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/layeredTransparencyPdf.ts",
+      "legacy_blob": "98481395b3c4f82604b371878ad46a4eb3345277",
+      "first_commit": "6532c9ff59e740920384806a86d8a206168d6d22|udeudeude|Add depth-sliced layered transparency print workflow",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/techniqueOutput.ts",
+      "legacy_blob": "b57d6dc0ce5213c9fd60f529386a1fb537559af0",
+      "first_commit": "44965e8d7f77e0b8e54dc39676f64e2887879925|udeudeude|Add batch photo workspace with captured settings and optional depth maps",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/phantogramDiagnosticSheet.ts",
+      "legacy_blob": "04a6f88c02003949736de8c41cf5a388a4dbc164",
+      "first_commit": "3b6a4f0d325b4007c0fe49f65075477cfa60640f|udeudeude|Add printable phantogram wireframe comparison sheet",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "legacy_blob": "bcdb95caac0d7789f9bc7697573b537bad210aef",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/src/depthGenerators.test.mjs",
+      "legacy_blob": "4c2e3091ee65d089daacf96a0d282338f82aba9d",
+      "first_commit": "6aaaf9aabeba5129d58a30012e6edd0a064ce1a9|udeudeude|Establish verified depth generator selection (#26)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/groundPlaneReference.ts",
+      "legacy_blob": "9ac4bac2e5a5edd558d57c502437f042d82f6455",
+      "first_commit": "0a694ded0377f3b1687e55ad2833c41c03a06229|udeudeude|Fix phantogram preview and add printable ground plane reference",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/browserDepth.ts",
+      "legacy_blob": "fc69f56b072c95870b95c81d3f1b5a9575dfdbc5",
+      "first_commit": "67af0734d03ea55df9963d5861d701b9f2ab7867|udeudeude|Run hosted AI depth in the browser (#2)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/modelPhantogram.ts",
+      "legacy_blob": "eae79653f0873dec190f70185ffa0508080e88c8",
+      "first_commit": "6865ccc4f9ff4437a5a3d6c85bf08e07093eefea|udeudeude|Add local 3D model phantogram renderer",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/viewMasterDrop.ts",
+      "legacy_blob": "6b0473dda326e412837b63e11d4722f3042ade3f",
+      "first_commit": "ec64e9f10dfab90e2835e8baffc1b99dfc1ab8d1|udeudeude|Add drag-and-drop upload to View-Master scenes",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/vite-env.d.ts",
+      "legacy_blob": "11f02fe2a0061d6e6e1f271b21da95423b448b32",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/src/StereoPairUpload.tsx",
+      "legacy_blob": "727e55a32cd47daf59b0fed9f4228c96913231bd",
+      "first_commit": "a0dd6f2ba8d85c114ed47f6635efccd65d35043f|udeudeude|Unify Studio sources and View-Master handoff",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/studioAssets.ts",
+      "legacy_blob": "926d09913a4903f148bf24737bab84ca89f56b65",
+      "first_commit": "a0dd6f2ba8d85c114ed47f6635efccd65d35043f|udeudeude|Unify Studio sources and View-Master handoff",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/printPageAssets.ts",
+      "legacy_blob": "d1c82b12bae070ffb0df51ed1cd26c47d3e65eb7",
+      "first_commit": "c49fcdb36f0a9b00ce36e1de2b2d87f0d676c710|udeudeude|Add one-click Studio output handoff to Print Page (#24)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/LayeredTransparencyBuilder.tsx",
+      "legacy_blob": "25a189a27b16606d97d83c5f4a26f0fe197926bc",
+      "first_commit": "6532c9ff59e740920384806a86d8a206168d6d22|udeudeude|Add depth-sliced layered transparency print workflow",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/ColorRevealBuilder.tsx",
+      "legacy_blob": "8d5a1675e55cabfd21ad25851f02d329364909e3",
+      "first_commit": "92f0712f8024c34bfa1095a14089ed6feda6d25a|udeudeude|Integrate calibrated color filters, CMY reveal, hosted labels, and mirror stereoscope (#11)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/PrintCalibrationBuilder.tsx",
+      "legacy_blob": "4d3fd7b5e15df0844ea57b14c53d7b446d182b70",
+      "first_commit": "aba524c6982ccbff848b976eb4412b96a06cb9d4|udeudeude|Add simple-first print calibration workspace (#19)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/PhantogramBuilder.tsx",
+      "legacy_blob": "ab0cd2c423702906863ba0c3572a8434151f2eda",
+      "first_commit": "f625e179226b61da7c4d1ea9909a67ca623aa829|udeudeude|Add AI relief phantogram print workspace",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/modelPhantogram.test.mjs",
+      "legacy_blob": "a61a31285db6715db6a85bd8d619803f14200ffc",
+      "first_commit": "63d56a388f8a41b6b7cc6ea517d06e511630af72|udeudeude|Correct phantogram projection and add geometric print test (#28)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/batchProcessing.ts",
+      "legacy_blob": "3da71f737a43b9c53740564098f964afdf59c16c",
+      "first_commit": "44965e8d7f77e0b8e54dc39676f64e2887879925|udeudeude|Add batch photo workspace with captured settings and optional depth maps",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/BatchWorkspace.tsx",
+      "legacy_blob": "64d3f51595d9745efe3266512fbd1f4a9c05a4b9",
+      "first_commit": "44965e8d7f77e0b8e54dc39676f64e2887879925|udeudeude|Add batch photo workspace with captured settings and optional depth maps",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/batchZip.ts",
+      "legacy_blob": "25ae616f3f9610aaba42f08ccfd3be76c6e4f455",
+      "first_commit": "44965e8d7f77e0b8e54dc39676f64e2887879925|udeudeude|Add batch photo workspace with captured settings and optional depth maps",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/AnaglyphEditor.tsx",
+      "legacy_blob": "9aa7b9a44e1369ece0311a94fe6c26043a209c41",
+      "first_commit": "02330c98d758949c19ff91a3b73929c2b962c9f5|Duy Huynh|Show the image and depth map, conditionally render AnaglyphEditor.tsx",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "legacy_blob": "d1d53dd462f258abaf97f0ae19dd2a4ac1dd2ca1",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/src/layeredTransparencyPdf.test.mjs",
+      "legacy_blob": "efa0f2982f39b7ce6857748ba53cac9db64daa8c",
+      "first_commit": "6532c9ff59e740920384806a86d8a206168d6d22|udeudeude|Add depth-sliced layered transparency print workflow",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/depthGenerators.ts",
+      "legacy_blob": "428be8a62cc53ff55febe89b28acfe784f7dce6f",
+      "first_commit": "6aaaf9aabeba5129d58a30012e6edd0a064ce1a9|udeudeude|Establish verified depth generator selection (#26)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/layeredTransparency.test.mjs",
+      "legacy_blob": "0ed02a3d0e0807606dfc2d12ac4d98928985ad98",
+      "first_commit": "6532c9ff59e740920384806a86d8a206168d6d22|udeudeude|Add depth-sliced layered transparency print workflow",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/viewMasterDrop.test.mjs",
+      "legacy_blob": "42b2937f520fea5eb20b0c19db0c9d78165f7eb4",
+      "first_commit": "ec64e9f10dfab90e2835e8baffc1b99dfc1ab8d1|udeudeude|Add drag-and-drop upload to View-Master scenes",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/viewMasterPdf.test.mjs",
+      "legacy_blob": "1a44e7817e39956f5a2a6738705be359d8488908",
+      "first_commit": "1ff066f898a527e6e45eda3b5377c49b18270164|udeudeude|Refine View-Master framing and reel workspace",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/regression_contract.test.mjs",
+      "legacy_blob": "3a896760d878f57a735c6a2fcf39075d6f939965",
+      "first_commit": "6d8faa758b6e5d5b56113d98ad63f9e9dfa1d09a|udeudeude|Add established-feature regression contract",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/StereoPairUpload.css",
+      "legacy_blob": "8b6cde624fbce0a682b7a91ef72d9f4e04880590",
+      "first_commit": "a0dd6f2ba8d85c114ed47f6635efccd65d35043f|udeudeude|Unify Studio sources and View-Master handoff",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/ViewMasterBuilder.css",
+      "legacy_blob": "041713ddc06087160fa65708aee3e1b7348e3347",
+      "first_commit": "4442e5479d9e5a6fd223a7888d4f6bb788a16910|udeudeude|Style View-Master reel builder",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/ViewMasterPairSlots.css",
+      "legacy_blob": "bd89d0a944d5b33022a6dfbe22b2612c18c8ceb5",
+      "first_commit": "a0dd6f2ba8d85c114ed47f6635efccd65d35043f|udeudeude|Unify Studio sources and View-Master handoff",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/AnaglyphEditor.css",
+      "legacy_blob": "eebdffa99bbd03c9d4a7d8107ff6ab0e21707869",
+      "first_commit": "566c55fefeaf2dd772938a680c3038b55cc571ed|Duy Huynh|separated index.css to the individual components stylesheet",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/src/styles/ColorRevealBuilder.css",
+      "legacy_blob": "cc6defc2133cde9d6476a61d4d95dfced0f28c25",
+      "first_commit": "92f0712f8024c34bfa1095a14089ed6feda6d25a|udeudeude|Integrate calibrated color filters, CMY reveal, hosted labels, and mirror stereoscope (#11)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/PolarizedProjection.css",
+      "legacy_blob": "dfbeabc0f2e7b0adb08dd09daf070c6f7ff342bf",
+      "first_commit": "b9fbde9a25988609c5c74af74660d916a111d807|udeudeude|Style polarized projection workspace",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/StereoPairEditor.css",
+      "legacy_blob": "e11cb7d918d3b9a757db753f7be1fae146c59248",
+      "first_commit": "a0dd6f2ba8d85c114ed47f6635efccd65d35043f|udeudeude|Unify Studio sources and View-Master handoff",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/FeedbackFixes.css",
+      "legacy_blob": "5c23926dc2b1c9cb470aa40896fd65dc623c2ed3",
+      "first_commit": "66c5d1133814e24b111c1d6a20ee04337f1ba01c|udeudeude|Polish stereoscope controls and sticky preview",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/StudioSourceModes.css",
+      "legacy_blob": "a1da25f93b1793962f1a7844b4a6e492150d362e",
+      "first_commit": "a0dd6f2ba8d85c114ed47f6635efccd65d35043f|udeudeude|Unify Studio sources and View-Master handoff",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/PrintCalibrationBuilder.css",
+      "legacy_blob": "94dd970e8535337bef060a540c18b64d73eba6b7",
+      "first_commit": "aba524c6982ccbff848b976eb4412b96a06cb9d4|udeudeude|Add simple-first print calibration workspace (#19)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/BatchWorkspace.css",
+      "legacy_blob": "63f0bb40678581e8801bac8d3e9a7906753beb65",
+      "first_commit": "44965e8d7f77e0b8e54dc39676f64e2887879925|udeudeude|Add batch photo workspace with captured settings and optional depth maps",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/App.css",
+      "legacy_blob": "abbb24bf28b9ade42d896c7f2dbc67e7604dd7e0",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/src/styles/ImageUpload.css",
+      "legacy_blob": "1d77add65d316988a63c5393341d231af5e764e2",
+      "first_commit": "566c55fefeaf2dd772938a680c3038b55cc571ed|Duy Huynh|separated index.css to the individual components stylesheet",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/src/styles/LayeredTransparencyBuilder.css",
+      "legacy_blob": "243b389758a9e773027dd83734fb172dc578cc84",
+      "first_commit": "6532c9ff59e740920384806a86d8a206168d6d22|udeudeude|Add depth-sliced layered transparency print workflow",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/LayeredCompositeBuilder.css",
+      "legacy_blob": "7876c0e47e99e48bfcc9bd2914b6b72e6b718f8b",
+      "first_commit": "0ec9008db878d8f0f14b6a8618ad357bfb18aec7|udeudeude|Add layered 3D foreground compositing (#17)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/PrintPageBuilder.css",
+      "legacy_blob": "efe8087f162335e498daa716c2f98b62870abc79",
+      "first_commit": "2f33c3792539c602ff328725de98d10aba73fb8d|udeudeude|Advance pre-print workflow: viewer profiles, print pages, depth selections, and digital-format guidance (#23)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/DepthGeneratorSelector.css",
+      "legacy_blob": "0272644358feac28c74e5482e9581a0ee49dc524",
+      "first_commit": "6aaaf9aabeba5129d58a30012e6edd0a064ce1a9|udeudeude|Establish verified depth generator selection (#26)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/src/styles/PhantogramBuilder.css",
+      "legacy_blob": "7b85a3ba4f1ed4cb853108124581b708692c6fe4",
+      "first_commit": "da70278762111093637d03583f95911b8bfd7e50|udeudeude|Style phantogram print workspace",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/NOTICE-ICONOIR.md",
+      "legacy_blob": "10298dfea4cd4bfad65d501518ed91d0db800842",
+      "first_commit": "681d8c3522a1bf69b507625eff341cbc7973274b|udeudeude|Expand depth editing, add standard shortcuts, and add restrained action icons (#22)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "frontend/package.json",
+      "legacy_blob": "4efcf0fcd6a7899641dd9024e9a02cabb5faca29",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "legacy_blob": "09f1486374159416fa83a02f7094723eec2ecb75",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/tsconfig.app.json",
+      "legacy_blob": "358ca9ba93f089b0133f05933f133a446402eb17",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/tsconfig.node.json",
+      "legacy_blob": "db0becc8b033a4a78144f4a3bb852082fe91cd62",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "legacy_blob": "1ffef600d959ec9e396d5a260bd3f5b927b2cef8",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "legacy_blob": "2328e170b0c2fd09a25fe72a20557c661702546e",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "frontend/eslint.config.js",
+      "legacy_blob": "092408a9f09eae19150818b4f0db5d1b70744828",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "backend/app.py",
+      "legacy_blob": "135aab8ded56a9e14da811b370918041227457a6",
+      "first_commit": "b5aa5016e646451e230f970585a2f64cb1f1b49d|Duy Huynh|first",
+      "upstream_path": true,
+      "handling": "post-fork implementation; mixed boilerplate reviewed and replaced where needed"
+    },
+    {
+      "path": "backend/production.py",
+      "legacy_blob": "7643f24a3b61fdc710d240a192fc7ed77c1149fe",
+      "first_commit": "5a10b21ea099761b54ba8aad69f3977499dd9b71|udeudeude|Add production web entrypoint",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "backend/test_stereo_renderer.py",
+      "legacy_blob": "572755831c02e3a3ad1391c6e659d1c9e7a4898c",
+      "first_commit": "9ded36023832983c9bf2f91710e3b616e4d512c2|udeudeude|Improve stereo reconstruction and add subject screen-depth selection",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "backend/test_depth_regenerate.py",
+      "legacy_blob": "fa2149aeb97d85469adb642af8910b7dd9b57c11",
+      "first_commit": "9d94e0c6f732285fe53714b7548d9e0204687895|udeudeude|Regenerate selected depth model for loaded image",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "backend/test_batch_workspace.py",
+      "legacy_blob": "2ea51d570050b0c7990805b40a6bef28205ce453",
+      "first_commit": "44965e8d7f77e0b8e54dc39676f64e2887879925|udeudeude|Add batch photo workspace with captured settings and optional depth maps",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "backend/requirements-hosted.txt",
+      "legacy_blob": "9e99dc986ef2132028f248442c59d2bc897c4106",
+      "first_commit": "28ce8e4579a37c3efa354fb30a28fbc51a483542|udeudeude|Reduce Render memory by removing hosted PyTorch (#5)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/DOWNLOAD-README.txt",
+      "legacy_blob": "6de1dd01443eac4aa5920fbc50e58e174f768432",
+      "first_commit": "36ea9ad06e1754d14e333eb4f81def587ed68836|udeudeude|Package the offline local Mac edition with cloud build and smoke tests",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/collect_licenses.py",
+      "legacy_blob": "fe3989e7b0a9d04483568f6eca3853a843320c24",
+      "first_commit": "36ea9ad06e1754d14e333eb4f81def587ed68836|udeudeude|Package the offline local Mac edition with cloud build and smoke tests",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/test_desktop.py",
+      "legacy_blob": "65cf5d5cbee9d752872901d812e2ea48fc4b2438",
+      "first_commit": "36ea9ad06e1754d14e333eb4f81def587ed68836|udeudeude|Package the offline local Mac edition with cloud build and smoke tests",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/RELEASE-NOTES.md",
+      "legacy_blob": "0c43be6dd09fea343d5694e6ea438e305cef1fb3",
+      "first_commit": "36ea9ad06e1754d14e333eb4f81def587ed68836|udeudeude|Package the offline local Mac edition with cloud build and smoke tests",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/launcher-processes.sh",
+      "legacy_blob": "67584595e5e1a5cdca7cdb86469150b1979af1bb",
+      "first_commit": "c705d400aa0a847e0d0bc538a6f8ab93c8bf0bca|udeudeude|Make local Mac launchers reliable and the default startup path",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/README.md",
+      "legacy_blob": "9d9c27e4cbe9329205cbff94313260709b9c2787",
+      "first_commit": "321cf6840a24c0ccee7aefebc043919613bf32a4|udeudeude|Add one-click macOS local start and stop apps (#15)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/THIRD-PARTY-NOTICES.md",
+      "legacy_blob": "a102687e4499a5a1522ad3746545b1c544919634",
+      "first_commit": "36ea9ad06e1754d14e333eb4f81def587ed68836|udeudeude|Package the offline local Mac edition with cloud build and smoke tests",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/desktop.spec",
+      "legacy_blob": "34a98d5f657de70fce99256354881f3d6d481bc3",
+      "first_commit": "36ea9ad06e1754d14e333eb4f81def587ed68836|udeudeude|Package the offline local Mac edition with cloud build and smoke tests",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/test_launcher_processes.sh",
+      "legacy_blob": "ddfb9ddcf9550746acadd8a9b71132644c259a5a",
+      "first_commit": "c705d400aa0a847e0d0bc538a6f8ab93c8bf0bca|udeudeude|Make local Mac launchers reliable and the default startup path",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/requirements-desktop.txt",
+      "legacy_blob": "13b50a52647488562932e5d187afd4296f355dc5",
+      "first_commit": "36ea9ad06e1754d14e333eb4f81def587ed68836|udeudeude|Package the offline local Mac edition with cloud build and smoke tests",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/desktop.py",
+      "legacy_blob": "292a9b2f7e696d123002855952d1dad2aebd7450",
+      "first_commit": "36ea9ad06e1754d14e333eb4f81def587ed68836|udeudeude|Package the offline local Mac edition with cloud build and smoke tests",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/Anaglyph & Friends.app/Contents/Info.plist",
+      "legacy_blob": "15ab83f98a6502bdc157d9ce167d13665bd764a4",
+      "first_commit": "321cf6840a24c0ccee7aefebc043919613bf32a4|udeudeude|Add one-click macOS local start and stop apps (#15)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/Anaglyph & Friends.app/Contents/MacOS/launcher",
+      "legacy_blob": "4c380b3706411168d350628e5642d24a2842b4cf",
+      "first_commit": "321cf6840a24c0ccee7aefebc043919613bf32a4|udeudeude|Add one-click macOS local start and stop apps (#15)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/Stop Anaglyph & Friends.app/Contents/Info.plist",
+      "legacy_blob": "60025ede7f35ae0cb3bf22cae4b00ae843ebe946",
+      "first_commit": "321cf6840a24c0ccee7aefebc043919613bf32a4|udeudeude|Add one-click macOS local start and stop apps (#15)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    },
+    {
+      "path": "macos/Stop Anaglyph & Friends.app/Contents/MacOS/launcher",
+      "legacy_blob": "d7e79078deb7de41d073ccb8611f7670230c89db",
+      "first_commit": "321cf6840a24c0ccee7aefebc043919613bf32a4|udeudeude|Add one-click macOS local start and stop apps (#15)",
+      "upstream_path": false,
+      "handling": "preserved post-fork component"
+    }
+  ]
+}

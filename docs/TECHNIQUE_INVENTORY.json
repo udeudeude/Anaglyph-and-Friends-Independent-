@@ -1,0 +1,232 @@
+{
+  "legacy": "c4e698d2cf4610964408c0ff69a71f8735d406e8",
+  "defaultTechniqueSettings": {
+    "anaglyph": {
+      "glasses": "red-cyan",
+      "colorMode": "full",
+      "target": "screen",
+      "screen": {
+        "leftColor": "#ff0000",
+        "rightColor": "#00ffff",
+        "leftGain": 100,
+        "rightGain": 100
+      },
+      "print": {
+        "leftColor": "#ff0000",
+        "rightColor": "#00ffff",
+        "leftGain": 100,
+        "rightGain": 100
+      }
+    },
+    "chromadepth": {
+      "colorStrength": 90,
+      "reverse": false
+    },
+    "cardboard": {
+      "preset": "cardboard",
+      "width": 1920,
+      "height": 1080,
+      "screenWidthMm": 121,
+      "lensSeparationMm": 63,
+      "imageScale": 92
+    },
+    "stereoscope": {
+      "preset": "holmes",
+      "dpi": 300,
+      "cardWidth": 7,
+      "cardHeight": 3.5,
+      "imageWidth": 2.85,
+      "imageHeight": 2.55,
+      "gap": 0.35,
+      "arch": 0.22,
+      "title": "STEREOSCOPIC VIEW",
+      "caption": "Generated from a single photograph",
+      "publisher": "Anaglyph & Friends",
+      "cardTone": "white"
+    },
+    "mirror": {
+      "dpi": 300,
+      "cardWidth": 8,
+      "cardHeight": 4,
+      "imageWidth": 3,
+      "imageHeight": 3,
+      "mirrorGap": 0.5,
+      "reflectedEye": "right",
+      "showGuide": true
+    },
+    "wiggle": {
+      "frames": 7,
+      "duration": 75
+    },
+    "pulfrich": {
+      "frames": 16,
+      "duration": 70,
+      "strength": 2,
+      "darkEye": "right"
+    },
+    "autostereogram": {
+      "separation": 8,
+      "depthStrength": 2.3,
+      "dotSize": 3,
+      "viewing": "parallel",
+      "color": false,
+      "guides": true,
+      "patternRevision": 0
+    },
+    "lenticular": {
+      "preset": "60lpi",
+      "dpi": 600,
+      "lpi": 60,
+      "widthIn": 6,
+      "heightIn": 4,
+      "views": 6,
+      "slant": 0,
+      "calibrationSpan": 0.5,
+      "calibrationStep": 0.1,
+      "calibrationWidth": 8
+    }
+  },
+  "techniques": [
+    {
+      "id": "anaglyph",
+      "label": "Anaglyph",
+      "description": "Color-filter stereo with standard or fully custom filter profiles for screen and print.",
+      "family": "Glasses",
+      "preview": "/output/anaglyph?scope=preview&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false",
+      "full": "/output/anaglyph?scope=full&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false"
+    },
+    {
+      "id": "parallel",
+      "label": "Parallel",
+      "description": "Left eye on left for relaxed / wall-eyed viewing without glasses.",
+      "family": "Unaided stereo",
+      "preview": "/output/parallel?scope=preview&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false",
+      "full": "/output/parallel?scope=full&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false"
+    },
+    {
+      "id": "cross",
+      "label": "Cross-Eyed",
+      "description": "Stereo pair swapped for cross-eyed viewing without glasses.",
+      "family": "Unaided stereo",
+      "preview": "/output/cross?scope=preview&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false",
+      "full": "/output/cross?scope=full&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false"
+    },
+    {
+      "id": "chromadepth",
+      "label": "ChromaDepth",
+      "description": "Encodes depth as spectral color for ChromaDepth glasses.",
+      "family": "Glasses",
+      "preview": "/special/chromadepth?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&color_strength=90&reverse=false",
+      "full": "/special/chromadepth?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&color_strength=90&reverse=false"
+    },
+    {
+      "id": "cardboard",
+      "label": "Cardboard / Phone Viewer",
+      "description": "Side-by-side stereo positioned for a phone VR viewer.",
+      "family": "Viewers",
+      "preview": "/special/cardboard?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&width=1920&height=1080&screen_width_mm=121&lens_separation_mm=63&image_scale=92",
+      "full": "/special/cardboard?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&width=1920&height=1080&screen_width_mm=121&lens_separation_mm=63&image_scale=92"
+    },
+    {
+      "id": "stereoscope",
+      "label": "Traditional Stereoscope Card",
+      "description": "Printable arched stereograph card with mount and text.",
+      "family": "Viewers",
+      "preview": "/special/stereoscope?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&dpi=300&card_width=7&card_height=3.5&image_width=2.85&image_height=2.55&gap=0.35&arch=0.22&title=STEREOSCOPIC+VIEW&caption=Generated+from+a+single+photograph&publisher=Anaglyph+%26+Friends&card_tone=white",
+      "full": "/special/stereoscope?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&dpi=300&card_width=7&card_height=3.5&image_width=2.85&image_height=2.55&gap=0.35&arch=0.22&title=STEREOSCOPIC+VIEW&caption=Generated+from+a+single+photograph&publisher=Anaglyph+%26+Friends&card_tone=white"
+    },
+    {
+      "id": "mirror",
+      "label": "Single-Mirror Stereoscope",
+      "description": "Side-by-side stereo arranged around a center mirror gap, with one eye image horizontally reversed for reflection.",
+      "family": "Viewers",
+      "preview": "/special/mirror-stereoscope?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&dpi=300&card_width=8&card_height=4&image_width=3&image_height=3&mirror_gap=0.5&reflected_eye=right&show_guide=true",
+      "full": "/special/mirror-stereoscope?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&dpi=300&card_width=8&card_height=4&image_width=3&image_height=3&mirror_gap=0.5&reflected_eye=right&show_guide=true"
+    },
+    {
+      "id": "wiggle",
+      "label": "Wiggle-gram",
+      "description": "Animated virtual viewpoints that reveal depth without glasses.",
+      "family": "Animation",
+      "preview": "/special/wiggle?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&frames=7&duration=75",
+      "full": "/special/wiggle?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&frames=7&duration=75"
+    },
+    {
+      "id": "pulfrich",
+      "label": "Pulfrich Motion 3D",
+      "description": "One-way depth-driven horizontal motion for viewing with a neutral-density filter over one eye.",
+      "family": "Animation / filter",
+      "preview": "/special/pulfrich?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&frames=16&duration=70&strength=2&dark_eye=right",
+      "full": "/special/pulfrich?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&frames=16&duration=70&strength=2&dark_eye=right"
+    },
+    {
+      "id": "randomdot",
+      "label": "Random-Dot Stereogram",
+      "description": "Single-image autostereogram generated entirely from depth.",
+      "family": "Autostereograms",
+      "preview": "/special/autostereogram?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&style=random&separation=8&depth_strength=2.3&dot_size=3&viewing=parallel&guides=true&color=false&revision=0",
+      "full": "/special/autostereogram?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&style=random&separation=8&depth_strength=2.3&dot_size=3&viewing=parallel&guides=true&color=false&revision=0"
+    },
+    {
+      "id": "pattern",
+      "label": "Pattern Stereogram",
+      "description": "Autostereogram using a repeating texture or your own pattern.",
+      "family": "Autostereograms",
+      "preview": "/special/autostereogram?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&style=pattern&separation=8&depth_strength=2.3&dot_size=3&viewing=parallel&guides=true&color=false&revision=0",
+      "full": "/special/autostereogram?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&style=pattern&separation=8&depth_strength=2.3&dot_size=3&viewing=parallel&guides=true&color=false&revision=0"
+    },
+    {
+      "id": "lenticular",
+      "label": "Lenticular 3D",
+      "description": "Multi-view interlaced print matched to lenticular sheet and printer.",
+      "family": "Print",
+      "preview": "/special/lenticular?scope=preview&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&dpi=600&lpi=60&width_in=6&height_in=4&views=6&slant=0",
+      "full": "/special/lenticular?scope=full&pop_out=false&max_disparity_percentage=2&swap_eyes=false&format=png&quality=95&dpi=600&lpi=60&width_in=6&height_in=4&views=6&slant=0"
+    },
+    {
+      "id": "topbottom",
+      "label": "Top / Bottom Stereo",
+      "description": "Full left and right frames stacked vertically in one digital image or video frame.",
+      "family": "Digital display format",
+      "usage": "Used by some 3D video, VR, media-player, and display workflows that expect the two eyes stacked vertically.",
+      "preview": "/output/topbottom?scope=preview&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false",
+      "full": "/output/topbottom?scope=full&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false"
+    },
+    {
+      "id": "halfsbs",
+      "label": "Half-Width Side-by-Side",
+      "description": "Each eye is compressed to half width inside one standard-size digital frame.",
+      "family": "Digital display format",
+      "usage": "Common in legacy and compressed 3D video distribution because an ordinary video frame can carry both eyes.",
+      "preview": "/output/halfsbs?scope=preview&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false",
+      "full": "/output/halfsbs?scope=full&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false"
+    },
+    {
+      "id": "rowinterlaced",
+      "label": "Row-Interlaced",
+      "description": "Alternating pixel rows carry the left and right eye views.",
+      "family": "Digital display format",
+      "usage": "Used by displays whose optical filter or scanning arrangement sends alternating rows to different eyes, especially some passive 3D systems.",
+      "preview": "/output/rowinterlaced?scope=preview&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false",
+      "full": "/output/rowinterlaced?scope=full&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false"
+    },
+    {
+      "id": "columninterlaced",
+      "label": "Column-Interlaced",
+      "description": "Alternating pixel columns carry the left and right eye views.",
+      "family": "Digital display format",
+      "usage": "Used by less-common autostereoscopic or filtered displays that separate the eyes by pixel columns.",
+      "preview": "/output/columninterlaced?scope=preview&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false",
+      "full": "/output/columninterlaced?scope=full&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false"
+    },
+    {
+      "id": "checkerboard",
+      "label": "Checkerboard Stereo",
+      "description": "Left and right eye samples alternate in a checkerboard pattern.",
+      "family": "Digital display format",
+      "usage": "Used by some legacy 3D televisions and DLP-based display systems that expect checkerboard-packed stereo.",
+      "preview": "/output/checkerboard?scope=preview&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false",
+      "full": "/output/checkerboard?scope=full&format=png&quality=95&pop_out=false&max_disparity_percentage=2&swap_eyes=false&optimised_RR_anaglyph=false&anaglyph_type=red-cyan&anaglyph_color=full&anaglyph_target=screen&anaglyph_left_color=%23ff0000&anaglyph_right_color=%2300ffff&anaglyph_left_gain=100&anaglyph_right_gain=100&repairs=false"
+    }
+  ]
+}

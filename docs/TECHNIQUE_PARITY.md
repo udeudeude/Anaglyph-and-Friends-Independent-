@@ -25,3 +25,8 @@ Source of truth: original post-fork `frontend/src/techniques.ts`, now preserved 
 **Important:** The Independent Edition's current API lists 16 modes, but that is *not* equivalent to the Legacy Edition's 17 techniques. The API includes extra single-eye outputs, combines distinct stereogram modes, and omits two digital formats. Counts must not be substituted for feature equivalence.
 
 The original technique settings, labels, defaults, and descriptions are preserved in `frontend/src/techniques.ts`. Before release, test all 17 legacy IDs, their options, preview behavior, and export formats against the Legacy Edition. This is a blocking acceptance requirement.
+
+
+## 2026-10-31 integration update
+
+The pre-integration gaps above have been replaced with the preserved catalog, controls, default settings and route adapters. All 17 recipe IDs now render through the integrated API at preview and full scope and their outputs are decoded by backend/test_server.py. Animated modes contain multiple GIF frames. This establishes endpoint integration, not physical-viewer or visual parity. Exact requests/defaults: TECHNIQUE_INVENTORY.json.

@@ -1,0 +1,55 @@
+/* Keep the result in view while the surrounding technique controls scroll. */
+.previewFrame {
+    position: sticky;
+    top: 10px;
+    z-index: 7;
+}
+
+.previewFrame:fullscreen {
+    position: fixed;
+    top: 0;
+}
+
+/* The stereoscope treatment control has exactly two buttons. Give them equal weight. */
+.colorRenderSlider:has(> button:nth-child(2):last-child) {
+    width: min(100%, 460px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.colorRenderSlider:has(> button:nth-child(2):last-child) > button {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 820px) {
+    .previewFrame {
+        position: relative;
+        top: auto;
+    }
+}
+
+@media (max-height: 720px) and (min-width: 821px) {
+    .previewFrame {
+        height: 48vh;
+        min-height: 260px;
+    }
+}
+
+
+/* Shared action icons. Keep icons subordinate to labels rather than replacing text. */
+.uiIcon {
+    width: 1.15em;
+    height: 1.15em;
+    flex: 0 0 auto;
+    vertical-align: -0.18em;
+}
+
+.viewerProfileDetails{margin-top:10px;border:1px solid #203650;border-radius:8px;background:#081421}
+.viewerProfileDetails>summary{cursor:pointer;padding:9px 10px;color:#899fb9;font-size:12px;font-weight:800}
+.viewerProfileBody{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid #1d3048;padding:10px}
+.viewerProfileBody label{display:grid;gap:4px;color:#899fb8;font-size:12px}
+.viewerProfileBody input,.viewerProfileBody select{width:100%;box-sizing:border-box;border:1px solid #2a425f;border-radius:7px;padding:7px;background:#0b1929;color:#c6d7eb}
+.viewerProfileBody>div{grid-column:1/-1;display:flex;gap:6px}
+.viewerProfileBody button{border:1px solid #2c4868;border-radius:7px;padding:7px 10px;background:#0d1d31;color:#8ca7c6;font-size:12px;font-weight:750}
+.viewerProfileBody small{grid-column:1/-1;color:#8c9fb3;line-height:1.45}
+@media(max-width:760px){.viewerProfileBody{grid-template-columns:1fr}}

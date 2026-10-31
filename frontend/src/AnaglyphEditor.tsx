@@ -1,0 +1,555 @@
+import { useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
+import "./styles/AnaglyphEditor.css";
+import TechniqueControls from './TechniqueControls';
+import UiIcon from './UiIcon';
+import BatchWorkspace from './BatchWorkspace';
+import type { BatchRecipe, BatchDepthSettings } from './batchProcessing';
+import { directOutputTechniques, directOutputUrl, specialOutputUrl, outputFilename, type OutputRecipe } from './techniqueOutput';
+import { hostedBrowserDepthEnabled } from './browserDepth';
+import type { PrintPageIncomingArtwork } from './printPageAssets';
+import { pointInContainedImage, screenDepthParameters, type ImagePoint } from './screenDepth';
+import {
+    mergeStoredSettings,
+    stereoBasedTechniques,
+    techniqueInfo,
+    type TechniqueId,
+    type TechniqueSettings,
+} from './techniques';
+
+type ProcessingStage = 'idle' | 'uploading' | 'depth' | 'stereo' | 'technique' | 'full' | 'ready' | 'error';
+
+type Props = {
+    isDepthMapReady: boolean;
+    depthSettings: BatchDepthSettings;
+    isChangeAllowed: boolean;
+    setIsChangeAllowed: (value: boolean) => void;
+    setProcessingStage: (stage: ProcessingStage) => void;
+    onOpenPhantogram: () => void;
+    onOpenColorReveal: () => void;
+    onOpenLayered: () => void;
+    onOpenTransparency: () => void;
+    onOpenPrintCalibration: () => void;
+    onOpenPrintPage: () => void;
+    onPreparePrintPage: (incoming: PrintPageIncomingArtwork) => void;
+};
+
+const coreTechniques = new Set<TechniqueId>(['anaglyph', 'parallel', 'cross']);
+const compatibilityTechniques = new Set<TechniqueId>(['topbottom', 'halfsbs', 'rowinterlaced', 'columninterlaced', 'checkerboard']);
+const allTechniques = new Set<TechniqueId>([
+    ...directOutputTechniques,
+    'chromadepth', 'cardboard', 'stereoscope', 'mirror', 'wiggle', 'pulfrich', 'randomdot', 'pattern', 'lenticular',
+]);
+const eyeOrderTechniques = new Set<TechniqueId>([
+    ...directOutputTechniques,
+    'cardboard', 'stereoscope', 'mirror', 'lenticular',
+]);
+
+const readNumber = (key: string, fallback: number) => {
+    const raw = localStorage.getItem(key);
+    if (raw === null || raw.trim() === '') return fallback;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : fallback;
+};
+
+const cloneSettings = (settings: TechniqueSettings): TechniqueSettings => JSON.parse(JSON.stringify(settings));
+
+function AnaglyphEditor({ depthSettings, isDepthMapReady, isChangeAllowed, setIsChangeAllowed, setProcessingStage, onOpenPhantogram, onOpenColorReveal, onOpenLayered, onOpenTransparency, onOpenPrintCalibration, onOpenPrintPage, onPreparePrintPage }: Props) {
+    const apiUrl = import.meta.env.VITE_FLASK_BACKEND_API_URL || "http://localhost:8000";
+    const previewRef = useRef<HTMLDivElement>(null);
+    const dragRef = useRef<{x: number; y: number; panX: number; panY: number} | null>(null);
+    const renderRequestRef = useRef(0);
+    const pickerRequestRef = useRef(0);
+
+    const [activeTechnique, setActiveTechnique] = useState<TechniqueId>(() => {
+        const saved = localStorage.getItem('aaf-technique') as TechniqueId | null;
+        return saved && allTechniques.has(saved) ? saved : 'anaglyph';
+    });
+    const [compatibilityMenuOpen, setCompatibilityMenuOpen] = useState(() => {
+        const saved = localStorage.getItem('aaf-technique') as TechniqueId | null;
+        return !!saved && compatibilityTechniques.has(saved);
+    });
+    const initialSettings = mergeStoredSettings(localStorage.getItem('aaf-technique-settings'));
+    const [draftSettings, setDraftSettings] = useState<TechniqueSettings>(() => cloneSettings(initialSettings));
+    const [appliedSettings, setAppliedSettings] = useState<TechniqueSettings>(() => cloneSettings(initialSettings));
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [outputsAreLoading, setOutputsAreLoading] = useState(false);
+    const [fullPreparing, setFullPreparing] = useState(false);
+    const [downloadError, setDownloadError] = useState('');
+    const [preparedDownload, setPreparedDownload] = useState<{ url: string; filename: string } | null>(null);
+    const [hasRendered, setHasRendered] = useState(false);
+    const [popOut, setPopOut] = useState(() => localStorage.getItem('aaf-pop-out') === 'true');
+    const [swapEyes, setSwapEyes] = useState(() => localStorage.getItem('aaf-swap-eyes') === 'true');
+    const [appliedStrength, setAppliedStrength] = useState(() => readNumber('aaf-strength', 2));
+    const [sliderValue, setSliderValue] = useState(() => readNumber('aaf-strength', 2));
+    const [optimiseRRAnaglyph, setOptimiseRRAnaglyph] = useState(() => localStorage.getItem('aaf-retinal-rivalry') === 'true');
+    const [viewScale, setViewScale] = useState(() => readNumber('aaf-view-scale', 100));
+    const [downloadFormat, setDownloadFormat] = useState<'jpeg' | 'png'>(() => localStorage.getItem('aaf-download-format') === 'png' ? 'png' : 'jpeg');
+    const [jpegQuality, setJpegQuality] = useState(() => readNumber('aaf-jpeg-quality', 95));
+    const [zoom, setZoom] = useState(1);
+    const [pan, setPan] = useState({x: 0, y: 0});
+    const [screenDepth, setScreenDepth] = useState<number | null>(null);
+    const [pickingScreenDepth, setPickingScreenDepth] = useState(false);
+    const [pickerUrl, setPickerUrl] = useState<string | null>(null);
+    const [pickerBusy, setPickerBusy] = useState(false);
+    const [showRepairs, setShowRepairs] = useState(false);
+    const [previewError, setPreviewError] = useState('');
+    const [batchRecipe, setBatchRecipe] = useState<BatchRecipe | null>(null);
+    const hostedEdition = hostedBrowserDepthEnabled();
+    useEffect(() => () => { if (preparedDownload) URL.revokeObjectURL(preparedDownload.url); }, [preparedDownload]);
+    useEffect(() => () => { if (pickerUrl) URL.revokeObjectURL(pickerUrl); }, [pickerUrl]);
+
+    const techniqueDirty = JSON.stringify(draftSettings) !== JSON.stringify(appliedSettings);
+    const renderParams = () => new URLSearchParams({ pop_out: String(popOut), max_disparity_percentage: String(appliedStrength), ...screenDepthParameters(screenDepth) }).toString();
+
+    const outputRecipe = (): OutputRecipe => ({
+        technique: activeTechnique, settings: appliedSettings, popOut, strength: appliedStrength,
+        swapEyes, retinalRivalry: optimiseRRAnaglyph, screenDepth, format: downloadFormat, jpegQuality,
+    });
+    const specialUrl = (technique: TechniqueId, scope: 'preview' | 'full') => specialOutputUrl(apiUrl, { ...outputRecipe(), technique }, scope);
+    const directUrl = (technique: TechniqueId, scope: 'preview' | 'full') => directOutputUrl(apiUrl, { ...outputRecipe(), technique }, scope, showRepairs);
+
+    const renderActivePreview = async () => {
+        if (!isDepthMapReady) return;
+        const renderId = ++renderRequestRef.current;
+        setPreviewError('');
+        setOutputsAreLoading(true);
+        setIsChangeAllowed(false);
+        setProcessingStage(directOutputTechniques.has(activeTechnique) ? 'stereo' : 'technique');
+        try {
+            let url: string;
+            if (directOutputTechniques.has(activeTechnique)) {
+                const renderResponse = await fetch(`${apiUrl}/render?${renderParams()}`, { method: 'GET', credentials: 'include' });
+                if (!renderResponse.ok) throw new Error(`Stereo render failed with status ${renderResponse.status}`);
+                url = directUrl(activeTechnique, 'preview');
+            } else {
+                url = specialUrl(activeTechnique, 'preview');
+            }
+            const response = await fetch(url, { method: 'GET', credentials: 'include' });
+            if (!response.ok) throw new Error(`Technique preview failed with status ${response.status}`);
+            const blob = await response.blob();
+            if (renderId !== renderRequestRef.current) return;
+            const nextUrl = URL.createObjectURL(blob);
+            setPreviewUrl(old => { if (old) URL.revokeObjectURL(old); return nextUrl; });
+            setHasRendered(true);
+            setProcessingStage('ready');
+        } catch (error) {
+            if (renderId !== renderRequestRef.current) return;
+            console.error('Failed to render selected technique', error);
+            setPreviewError(error instanceof Error ? error.message : 'Could not render the preview. Please retry.');
+            setProcessingStage('error');
+        } finally {
+            if (renderId === renderRequestRef.current) {
+                setOutputsAreLoading(false);
+                setIsChangeAllowed(true);
+            }
+        }
+    };
+
+    useEffect(() => { if (isDepthMapReady) void renderActivePreview(); }, [isDepthMapReady, activeTechnique, popOut, swapEyes, appliedStrength, optimiseRRAnaglyph, appliedSettings, screenDepth, showRepairs]);
+    useEffect(() => {
+        if (!isDepthMapReady) {
+            renderRequestRef.current += 1;
+            pickerRequestRef.current += 1;
+            setOutputsAreLoading(false);
+            setScreenDepth(null);
+            setPickingScreenDepth(false);
+            setPickerBusy(false);
+            setPickerUrl(null);
+            setPreviewError('');
+            setHasRendered(false);
+            setPreviewUrl(old => { if (old) URL.revokeObjectURL(old); return null; });
+        }
+    }, [isDepthMapReady]);
+
+    useEffect(() => { localStorage.setItem('aaf-technique', activeTechnique); setZoom(1); setPan({x: 0, y: 0}); setPickingScreenDepth(false); pickerRequestRef.current += 1; setPickerBusy(false); }, [activeTechnique]);
+    useEffect(() => { localStorage.setItem('aaf-pop-out', String(popOut)); }, [popOut]);
+    useEffect(() => { localStorage.setItem('aaf-swap-eyes', String(swapEyes)); }, [swapEyes]);
+    useEffect(() => { localStorage.setItem('aaf-strength', String(appliedStrength)); }, [appliedStrength]);
+    useEffect(() => { localStorage.setItem('aaf-retinal-rivalry', String(optimiseRRAnaglyph)); }, [optimiseRRAnaglyph]);
+    useEffect(() => { localStorage.setItem('aaf-view-scale', String(viewScale)); }, [viewScale]);
+    useEffect(() => { localStorage.setItem('aaf-download-format', downloadFormat); }, [downloadFormat]);
+    useEffect(() => { localStorage.setItem('aaf-jpeg-quality', String(jpegQuality)); }, [jpegQuality]);
+    useEffect(() => { localStorage.setItem('aaf-technique-settings', JSON.stringify(draftSettings)); }, [draftSettings]);
+
+    const applyTechniqueSettings = (settings?: TechniqueSettings) => setAppliedSettings(cloneSettings(settings || draftSettings));
+    const fullscreen = () => previewRef.current?.requestFullscreen?.();
+
+    const cancelScreenDepth = () => {
+        pickerRequestRef.current += 1;
+        setPickingScreenDepth(false);
+        setPickerBusy(false);
+        setPickerUrl(null);
+    };
+
+    const startScreenDepth = async () => {
+        const requestId = ++pickerRequestRef.current;
+        setPreviewError('');
+        setPickerBusy(true);
+        try {
+            const response = await fetch(`${apiUrl}/stereo/source`, { credentials: 'include' });
+            if (!response.ok) throw new Error('Could not load the original photo. Please retry.');
+            const blob = await response.blob();
+            if (requestId !== pickerRequestRef.current) return;
+            setPickerUrl(URL.createObjectURL(blob));
+            setZoom(1);
+            setPan({x: 0, y: 0});
+            setPickingScreenDepth(true);
+        } catch (error) {
+            if (requestId === pickerRequestRef.current) setPreviewError(error instanceof Error ? error.message : 'Could not load the original photo.');
+        } finally {
+            if (requestId === pickerRequestRef.current) setPickerBusy(false);
+        }
+    };
+
+    const chooseScreenDepth = async (point: ImagePoint) => {
+        if (pickerBusy) return;
+        const requestId = ++pickerRequestRef.current;
+        setPickerBusy(true);
+        try {
+            const response = await fetch(`${apiUrl}/stereo/screen-depth`, {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(point),
+            });
+            if (!response.ok) throw new Error('Could not set screen depth. Please retry.');
+            const result = await response.json();
+            if (requestId !== pickerRequestRef.current) return;
+            if (!Number.isFinite(result.screen_depth)) throw new Error('Invalid screen depth returned. Please retry.');
+            setScreenDepth(result.screen_depth);
+            setPickingScreenDepth(false);
+            setPickerUrl(null);
+        } catch (error) {
+            if (requestId === pickerRequestRef.current) setPreviewError(error instanceof Error ? error.message : 'Could not set screen depth.');
+        } finally {
+            if (requestId === pickerRequestRef.current) setPickerBusy(false);
+        }
+    };
+
+    const selectCoreTechnique = (technique: TechniqueId) => {
+        setCompatibilityMenuOpen(false);
+        setActiveTechnique(technique);
+    };
+
+    const selectMoreTechnique = (value: string) => {
+        if (value === '__phantogram__') {
+            onOpenPhantogram();
+            return;
+        }
+        if (value === '__color_reveal__') {
+            onOpenColorReveal();
+            return;
+        }
+        if (value === '__layered__') {
+            onOpenLayered();
+            return;
+        }
+        if (value === '__transparency__') {
+            onOpenTransparency();
+            return;
+        }
+        if (value === '__print_calibration__') {
+            onOpenPrintCalibration();
+            return;
+        }
+        if (value === '__print_page__') {
+            onOpenPrintPage();
+            return;
+        }
+        if (value === '__compatibility__') {
+            setCompatibilityMenuOpen(true);
+            return;
+        }
+        setCompatibilityMenuOpen(false);
+        setActiveTechnique(value as TechniqueId);
+    };
+
+    const triggerBlobDownload = (blob: Blob, filename: string) => {
+        const url = URL.createObjectURL(blob);
+        setPreparedDownload({ url, filename });
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
+
+    const currentFilename = () => outputFilename(outputRecipe());
+
+    const fetchFullOutputBlob = async () => {
+        let url: string;
+        if (directOutputTechniques.has(activeTechnique)) {
+            const prepare = await fetch(`${apiUrl}/prepare-full?${renderParams()}`, { method: 'GET', credentials: 'include' });
+            if (!prepare.ok) throw new Error(`Full-resolution stereo render failed: ${prepare.status}`);
+            url = directUrl(activeTechnique, 'full');
+        } else {
+            url = specialUrl(activeTechnique, activeTechnique === 'wiggle' || activeTechnique === 'pulfrich' ? 'preview' : 'full');
+        }
+        const response = await fetch(url, { method: 'GET', credentials: 'include' });
+        if (!response.ok) throw new Error(`Final output failed: ${response.status}`);
+        return response.blob();
+    };
+
+    const downloadCurrent = async () => {
+        if (!isDepthMapReady || fullPreparing) return;
+        setDownloadError('');
+        setPreparedDownload(null);
+        setFullPreparing(true);
+        setIsChangeAllowed(false);
+        setProcessingStage('full');
+        try {
+            triggerBlobDownload(await fetchFullOutputBlob(), currentFilename());
+            setProcessingStage('ready');
+        } catch (error) {
+            console.error('Failed to create final download', error);
+            setDownloadError(error instanceof Error ? `Download failed: ${error.message}. Please retry.` : 'Download failed. Please retry.');
+            setProcessingStage('error');
+        } finally {
+            setFullPreparing(false);
+            setIsChangeAllowed(true);
+        }
+    };
+
+    const printPageMetadata = () => {
+        const suggestedArtworkWidthIn = activeTechnique === 'stereoscope'
+            ? appliedSettings.stereoscope.cardWidth
+            : activeTechnique === 'mirror'
+                ? appliedSettings.mirror.cardWidth
+                : activeTechnique === 'lenticular'
+                    ? appliedSettings.lenticular.widthIn
+                    : undefined;
+        const sourceDpi = activeTechnique === 'stereoscope'
+            ? appliedSettings.stereoscope.dpi
+            : activeTechnique === 'mirror'
+                ? appliedSettings.mirror.dpi
+                : activeTechnique === 'lenticular'
+                    ? appliedSettings.lenticular.dpi
+                    : undefined;
+        return {
+            technique: activeTechnique,
+            techniqueLabel: techniqueInfo[activeTechnique].label,
+            settings: {
+                technique: cloneSettings(appliedSettings),
+                popOut,
+                swapEyes,
+                strength: appliedStrength,
+                screenDepth,
+                retinalRivalry: optimiseRRAnaglyph,
+                outputFormat: downloadFormat,
+                jpegQuality,
+            },
+            suggestedArtworkWidthIn,
+            sourceDpi,
+        };
+    };
+
+    const prepareCurrentForPrintPage = async () => {
+        if (!isDepthMapReady || fullPreparing || activeTechnique === 'wiggle' || activeTechnique === 'pulfrich') return;
+        setFullPreparing(true);
+        setIsChangeAllowed(false);
+        setProcessingStage('full');
+        try {
+            const blob = await fetchFullOutputBlob();
+            const file = new File([blob], currentFilename(), { type: blob.type || (currentFilename().endsWith('.png') ? 'image/png' : 'image/jpeg') });
+            onPreparePrintPage({ file, source: printPageMetadata() });
+            setProcessingStage('ready');
+        } catch (error) {
+            console.error('Failed to prepare current output for Print Page', error);
+            setProcessingStage('error');
+        } finally {
+            setFullPreparing(false);
+            setIsChangeAllowed(true);
+        }
+    };
+
+    const downloadEye = async (kind: 'left' | 'right') => {
+        if (!isDepthMapReady || fullPreparing) return;
+        setDownloadError('');
+        setPreparedDownload(null);
+        setFullPreparing(true);
+        setProcessingStage('full');
+        try {
+            const prepare = await fetch(`${apiUrl}/prepare-full?${renderParams()}`, { method: 'GET', credentials: 'include' });
+            if (!prepare.ok) throw new Error(`Full-resolution stereo render failed: ${prepare.status}`);
+            const params = new URLSearchParams({
+                scope: 'full', format: downloadFormat, quality: String(jpegQuality),
+                pop_out: String(popOut), max_disparity_percentage: String(appliedStrength), swap_eyes: String(swapEyes),
+                ...screenDepthParameters(screenDepth),
+            });
+            const response = await fetch(`${apiUrl}/output/${kind}?${params.toString()}`, { credentials: 'include' });
+            if (!response.ok) throw new Error(`Eye download failed: ${response.status}`);
+            triggerBlobDownload(await response.blob(), `${kind}-eye.${downloadFormat === 'png' ? 'png' : 'jpg'}`);
+            setProcessingStage('ready');
+        } catch (error) {
+            console.error(error);
+            setDownloadError(error instanceof Error ? `Eye download failed: ${error.message}. Please retry.` : 'Eye download failed. Please retry.');
+            setProcessingStage('error');
+        } finally {
+            setFullPreparing(false);
+        }
+    };
+
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.repeat || batchRecipe) return;
+            const target = event.target as HTMLElement | null;
+            if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+            const key = event.key.toLowerCase();
+            const primary = event.metaKey || event.ctrlKey;
+            if (primary && !event.shiftKey && !event.altKey && key === 's' && previewUrl) {
+                event.preventDefault();
+                void downloadCurrent();
+                return;
+            }
+            if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+            if (key === 'r') { event.preventDefault(); selectCoreTechnique('anaglyph'); }
+            else if (key === 'v') { event.preventDefault(); selectCoreTechnique('parallel'); }
+            else if (key === 'x') { event.preventDefault(); selectCoreTechnique('cross'); }
+            else if (key === 'f' && previewUrl) { event.preventDefault(); fullscreen(); }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [batchRecipe, activeTechnique, previewUrl, isDepthMapReady, fullPreparing, downloadFormat, jpegQuality, popOut, swapEyes, appliedStrength, optimiseRRAnaglyph, appliedSettings, screenDepth]);
+
+    const zoomBy = (amount: number) => {
+        const next = Math.max(1, Math.min(4, Number((zoom + amount).toFixed(2))));
+        setZoom(next);
+        if (next === 1) setPan({x: 0, y: 0});
+    };
+    const resetZoom = () => { setZoom(1); setPan({x: 0, y: 0}); };
+    const beginPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+        if (zoom <= 1 || pickingScreenDepth) return;
+        dragRef.current = {x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y};
+        event.currentTarget.setPointerCapture(event.pointerId);
+    };
+    const movePan = (event: ReactPointerEvent<HTMLDivElement>) => {
+        if (!dragRef.current) return;
+        setPan({x: dragRef.current.panX + event.clientX - dragRef.current.x, y: dragRef.current.panY + event.clientY - dragRef.current.y});
+    };
+    const endPan = () => { dragRef.current = null; };
+
+    const openBatch = () => {
+        setBatchRecipe(structuredClone({ ...outputRecipe(), settings: draftSettings, strength: sliderValue,
+            depth: depthSettings, capturedAt: new Date().toISOString() }));
+    };
+
+    const usesStereo = stereoBasedTechniques.has(activeTechnique);
+    const usesEyeOrder = eyeOrderTechniques.has(activeTechnique);
+    const fixedFormat = activeTechnique === 'wiggle' || activeTechnique === 'pulfrich' ? 'GIF' : activeTechnique === 'stereoscope' || activeTechnique === 'mirror' || activeTechnique === 'lenticular' ? 'PNG' : null;
+    const info = techniqueInfo[activeTechnique];
+    const compatibilitySelected = compatibilityTechniques.has(activeTechnique);
+    const specialSelected = !coreTechniques.has(activeTechnique) && !compatibilitySelected;
+    const showTechniqueSettings = activeTechnique === 'anaglyph' || specialSelected;
+    const showRetinalRivalry = activeTechnique === 'anaglyph' && appliedSettings.anaglyph.glasses === 'red-cyan' && appliedSettings.anaglyph.colorMode === 'full' && appliedSettings.anaglyph.target === 'screen';
+
+    const genericSettings = (fullscreenMode = false) => <div className={`settingsCard ${usesStereo ? '' : 'nonStereo'} ${fullscreenMode ? 'fullscreenSettingsCard' : ''}`}>
+        {usesStereo && <div className="settingGroup">
+            <div className="settingTitle"><span>3D strength</span><strong>{sliderValue.toFixed(1)}%</strong></div>
+            <input type="range" min="0" max="6" step="0.1" value={sliderValue} disabled={!isChangeAllowed} onChange={(e) => setSliderValue(parseFloat(e.target.value))} onPointerUp={() => isChangeAllowed && setAppliedStrength(sliderValue)} onKeyUp={() => isChangeAllowed && setAppliedStrength(sliderValue)} />
+            <div className="rangeLabels"><span>Subtle</span><span>{sliderValue !== appliedStrength ? 'Release to apply' : 'Strong'}</span></div>
+        </div>}
+        <div className="settingGroup">
+            <div className="settingTitle"><span>On-screen preview size</span><strong>{viewScale}%</strong></div>
+            <input type="range" min="35" max="100" step="1" value={viewScale} onChange={(e) => setViewScale(parseInt(e.target.value))} />
+            <div className="rangeLabels"><span>Smaller</span><span>Fill stage</span></div>
+        </div>
+        {usesStereo && <label className="toggleSetting"><span><strong>Pop out</strong><small>{screenDepth === null ? 'Place depth in front of screen' : 'Change to reset the chosen screen depth'}</small></span><input type="checkbox" checked={popOut} disabled={!isChangeAllowed || pickingScreenDepth} onChange={(e) => { setPopOut(e.target.checked); setScreenDepth(null); }} /></label>}
+        {usesStereo && <div className="settingGroup screenDepthSetting">
+            <div className="settingTitle"><span>Screen depth</span><strong>{screenDepth === null ? 'Automatic' : 'Subject selected'}</strong></div>
+            <small>Choose the part of the photo that should sit at the screen.</small>
+            <div><button onClick={() => void startScreenDepth()} disabled={!isDepthMapReady || !isChangeAllowed || pickerBusy || pickingScreenDepth}>Set screen depth…</button><button onClick={() => setScreenDepth(null)} disabled={screenDepth === null || !isChangeAllowed || pickingScreenDepth}>Reset</button></div>
+        </div>}
+        {directOutputTechniques.has(activeTechnique) && <label className="toggleSetting"><span><strong>Show repaired areas</strong><small>Orange marks reconstructed pixels. Downloads stay clean.</small></span><input type="checkbox" checked={showRepairs} disabled={!isChangeAllowed || pickingScreenDepth} onChange={(e) => setShowRepairs(e.target.checked)} /></label>}
+        {usesEyeOrder && <label className="toggleSetting"><span><strong>Swap left / right</strong><small>Reverse eye order without regenerating depth</small></span><input type="checkbox" checked={swapEyes} disabled={!isChangeAllowed} onChange={(e) => setSwapEyes(e.target.checked)} /></label>}
+        {showRetinalRivalry && <label className="toggleSetting"><span><strong>Reduce retinal rivalry</strong><small>Optimized full-color red/cyan only</small></span><input type="checkbox" checked={optimiseRRAnaglyph} disabled={!isChangeAllowed} onChange={(e) => setOptimiseRRAnaglyph(e.target.checked)} /></label>}
+    </div>;
+
+    return (
+        <div className="editorWorkspace">
+            {batchRecipe && <BatchWorkspace apiUrl={apiUrl} recipe={batchRecipe} hosted={hostedEdition} onClose={() => setBatchRecipe(null)} />}
+            <div className="editorHeader">
+                <div><div className="panelLabel">OUTPUT</div><h2>3D Technique Studio</h2></div>
+                <div className="editorHeaderActions"><button className="batchLaunch" onClick={openBatch} disabled={!isChangeAllowed || fullPreparing || outputsAreLoading || pickerBusy}><UiIcon name="batch" /> Batch photos…</button><div className="generationState">{fullPreparing ? "Preparing final output…" : outputsAreLoading ? <><span className="miniLoader" /> Rendering {info.label}</> : isDepthMapReady ? "Ready" : "Waiting for image"}</div></div>
+            </div>
+
+            <div className="techniqueChooser">
+                <div className="outputTabs">
+                    <button className={activeTechnique === 'anaglyph' ? 'outputTab active' : 'outputTab'} onClick={() => selectCoreTechnique('anaglyph')}>Anaglyph <kbd>R</kbd></button>
+                    <button className={activeTechnique === 'parallel' ? 'outputTab active' : 'outputTab'} onClick={() => selectCoreTechnique('parallel')}>Parallel <kbd>V</kbd></button>
+                    <button className={activeTechnique === 'cross' ? 'outputTab active' : 'outputTab'} onClick={() => selectCoreTechnique('cross')}>Cross-Eyed <kbd>X</kbd></button>
+                </div>
+                <select className={specialSelected ? 'moreTechniques active' : 'moreTechniques'} value={specialSelected ? activeTechnique : ''} onChange={(e) => selectMoreTechnique(e.target.value)}>
+                    <option value="" disabled>More techniques…</option>
+                    <optgroup label="Glasses"><option value="chromadepth">ChromaDepth</option></optgroup>
+                    <optgroup label="Viewers"><option value="cardboard">Cardboard / Phone Viewer</option><option value="stereoscope">Traditional Stereoscope Card</option><option value="mirror">Single-Mirror Stereoscope</option></optgroup>
+                    <optgroup label="Animation"><option value="wiggle">Wiggle-gram</option><option value="pulfrich">Pulfrich Motion 3D</option></optgroup>
+                    <optgroup label="Autostereograms"><option value="randomdot">Random-Dot Stereogram</option><option value="pattern">Pattern Stereogram</option></optgroup>
+                    <optgroup label="Print"><option value="lenticular">Lenticular 3D</option><option value="__phantogram__">Phantogram</option><option value="__transparency__">Layered Transparency</option><option value="__color_reveal__">RGB Reveal / CMY Layers</option></optgroup>
+                    <optgroup label="Compositing"><option value="__layered__">Layered 3D Composite</option></optgroup>
+                    <optgroup label="Advanced tools"><option value="__print_calibration__">Print calibration & setup…</option><option value="__print_page__">Prepare print page…</option></optgroup>
+                    <option className="techniqueMenuDivider" value="__divider__" disabled>────────────</option>
+                    <option value="__compatibility__">Even more techniques · digital display formats…</option>
+                </select>
+                {(compatibilityMenuOpen || compatibilitySelected) && <select className={compatibilitySelected ? 'compatibilityTechniques active' : 'compatibilityTechniques'} value={compatibilitySelected ? activeTechnique : ''} onChange={(e) => setActiveTechnique(e.target.value as TechniqueId)}>
+                    <option value="" disabled>Digital display formats…</option>
+                    <option value="halfsbs">Half-Width Side-by-Side</option>
+                    <option value="topbottom">Top / Bottom Stereo</option>
+                    <option value="rowinterlaced">Row-Interlaced</option>
+                    <option value="columninterlaced">Column-Interlaced</option>
+                    <option value="checkerboard">Checkerboard Stereo</option>
+                </select>}
+            </div>
+            <div className="techniqueSummary"><strong>{info.label}</strong><span>{info.description}</span>{info.usage && <small>{info.usage}</small>}<em>{info.family}</em></div>
+
+            <div className={`previewFrame ${zoom > 1 ? 'zoomed' : ''} ${pickingScreenDepth ? 'pickingScreenDepth' : ''}`} ref={previewRef} onPointerDown={beginPan} onPointerMove={movePan} onPointerUp={endPan} onPointerCancel={endPan} onDoubleClick={resetZoom}>
+                {pickingScreenDepth && pickerUrl ? <img src={pickerUrl} alt="Original photo: choose a subject for screen depth" draggable={false} style={{maxWidth: `${viewScale}%`}} tabIndex={0} role="button" aria-label="Choose screen depth in the original photo; Enter selects the center" onPointerUp={(e) => {
+                    const image = e.currentTarget;
+                    const point = pointInContainedImage(e.clientX, e.clientY, image.getBoundingClientRect(), image.naturalWidth, image.naturalHeight);
+                    if (point) void chooseScreenDepth(point);
+                }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); void chooseScreenDepth({x: 0.5, y: 0.5}); } else if (e.key === 'Escape') cancelScreenDepth(); }} /> : previewUrl ? <img src={previewUrl} alt={info.label} draggable={false} style={{maxWidth: `${viewScale}%`, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`}} /> : (
+                    <div className="emptyStage"><div className="stereoGlyph">◉ ◉</div><strong>Your 3D result will appear here</strong><span>Drop, choose, or paste an image in the source panel.</span></div>
+                )}
+                {(outputsAreLoading || pickerBusy) && <div className="loadingVeil"><div className="largeLoader" /><span>{pickerBusy ? 'Preparing screen depth…' : `Rendering ${info.label}…`}</span></div>}
+                {pickingScreenDepth && <div className="screenDepthPrompt" onPointerDown={(e) => e.stopPropagation()}><span>Click your subject in the original photo to place it at screen depth.</span><button onClick={cancelScreenDepth}>Cancel</button></div>}
+                <div className="fullscreenHotZone" aria-hidden="true" />
+                <div className="fullscreenDock" onPointerDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                    <div className="fullscreenDockHeader">
+                        <div><strong>{info.label}</strong><span>Move the pointer above this panel to hide it.</span></div>
+                        <button className="printPageAction" onClick={() => void prepareCurrentForPrintPage()} disabled={!previewUrl || fullPreparing || activeTechnique === 'wiggle' || activeTechnique === 'pulfrich'} title={activeTechnique === 'wiggle' || activeTechnique === 'pulfrich' ? 'Animated outputs cannot be placed on a static print page.' : 'Send the full-resolution current output directly to Prepare print page'}>Prepare print page</button>
+                    <button className="downloadAction" onClick={() => void downloadCurrent()} disabled={!previewUrl || fullPreparing}>{fullPreparing ? <><span className="buttonLoader" /> Preparing…</> : <><UiIcon name="download" /> Download <kbd>⌘S</kbd></>}</button>
+                    </div>
+                    {genericSettings(true)}
+                    {showTechniqueSettings && <TechniqueControls technique={activeTechnique} settings={draftSettings} setSettings={setDraftSettings} onApply={applyTechniqueSettings} dirty={techniqueDirty} disabled={!isChangeAllowed} apiUrl={apiUrl} />}
+                </div>
+            </div>
+            {showRepairs && directOutputTechniques.has(activeTechnique) && !pickingScreenDepth && <p className="repairLegend">Orange = reconstructed areas, including exposed frame edges. Preview only.</p>}
+            {previewError && <p className="finalDownloadError" role="alert">{previewError}</p>}
+
+            <div className="previewMeta">
+                <div><strong>{info.label}</strong><span>{info.description}</span>{info.usage && <small>{info.usage}</small>}</div>
+                <div className="previewActions">
+                    <div className="zoomControls"><button onClick={() => zoomBy(-0.25)} disabled={zoom <= 1}>−</button><button onClick={resetZoom}>{Math.round(zoom * 100)}%</button><button onClick={() => zoomBy(0.25)} disabled={zoom >= 4}>＋</button></div>
+                    <button onClick={fullscreen} disabled={!previewUrl}><UiIcon name="expand" /> Fullscreen <kbd>F</kbd></button>
+                    <button className="downloadAction" onClick={() => void downloadCurrent()} disabled={!previewUrl || fullPreparing}>{fullPreparing ? <><span className="buttonLoader" /> Preparing…</> : <><UiIcon name="download" /> Download <kbd>⌘S</kbd></>}</button>
+                </div>
+            </div>
+            {downloadError && <p className="finalDownloadError" role="alert">{downloadError}</p>}
+            {preparedDownload && <p className="preparedDownload">File prepared. If it did not save automatically, <a href={preparedDownload.url} download={preparedDownload.filename} target="_blank" rel="noopener noreferrer">open or save {preparedDownload.filename}</a>{hostedEdition ? ' (on iPhone, use Share → Save to Files if it opens).' : '.'}</p>}
+
+            {genericSettings()}
+
+            {showTechniqueSettings && <TechniqueControls technique={activeTechnique} settings={draftSettings} setSettings={setDraftSettings} onApply={applyTechniqueSettings} dirty={techniqueDirty} disabled={!isChangeAllowed} apiUrl={apiUrl} />}
+
+            <div className="downloadPanel">
+                <div className="downloadHeading"><div><strong>Final output</strong><span>{activeTechnique === 'wiggle' || activeTechnique === 'pulfrich' ? 'Animated GIFs are exported at a playback-optimized raster size so the saved file can maintain its requested speed.' : hostedEdition ? 'Hosted exports use an image up to 1800 pixels on its longest side to fit the free service. Print-specific formats use their selected physical dimensions and DPI.' : 'Static techniques render from the full-resolution source. Print-specific formats use their selected physical dimensions and DPI.'}</span></div><span className="fullResBadge">{hostedEdition ? 'HOSTED SIZE' : 'FULL QUALITY'}</span></div>
+                <div className="downloadControls">
+                    {fixedFormat ? <div className="fixedFormat"><span>Format</span><strong>{fixedFormat}</strong></div> : <label>Format<select value={downloadFormat} onChange={(e) => setDownloadFormat(e.target.value as 'jpeg' | 'png')}><option value="jpeg">JPEG</option><option value="png">PNG</option></select></label>}
+                    {!fixedFormat && downloadFormat === 'jpeg' && <label>JPEG quality<input type="range" min="70" max="100" step="1" value={jpegQuality} onChange={(e) => setJpegQuality(parseInt(e.target.value))} /><strong>{jpegQuality}</strong></label>}
+                    {usesStereo && <div className="eyeDownloads"><button onClick={() => void downloadEye('left')} disabled={!hasRendered || fullPreparing}><UiIcon name="download" /> Left eye</button><button onClick={() => void downloadEye('right')} disabled={!hasRendered || fullPreparing}><UiIcon name="download" /> Right eye</button></div>}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default AnaglyphEditor;

@@ -1,17 +1,20 @@
 import { AUTOMATIC_DEPTH_GENERATOR, resolveDepthGenerator } from './depthGenerators'
 import type { DepthGeneratorSelection } from './depthGenerators'
 
-const TRANSFORMERS_CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/+esm'
+import { normalizedPrediction, encodeDepthNpy } from './depthPrecision'
+const MODEL_REVISION = '4472b7362082ad9968fee890ca0f1e5aca36b93d'
 const MODEL_ID = 'onnx-community/depth-anything-v2-small'
 
 type Progress = (message: string) => void
 type ModelProgress = { status?: string; progress?: number }
-type DepthImage = { width: number; height: number; data: Uint8Array | Uint8ClampedArray }
-type DepthEstimator = (source: string) => Promise<{ depth: DepthImage }>
+type DepthPrediction = { dims: number[]; data: Float32Array; dispose?: () => void }
+type DepthResult = { predicted_depth: DepthPrediction }
+type DepthEstimator = (source: string) => Promise<DepthResult>
 type TransformersModule = {
     pipeline: (task: string, model: string, options: {
         device?: string
         dtype?: string
+        revision?: string
         progress_callback: (info: ModelProgress) => void
     }) => Promise<DepthEstimator>
 }
@@ -128,20 +131,21 @@ export function describeBrowserDepthError(error: unknown): BrowserDepthFailureIn
     }
 }
 
-async function createEstimator(progress?: Progress) {
+async function createEstimator(progress?: Progress, forceCpu = false) {
     if (estimatorPromise) return estimatorPromise
     estimatorPromise = (async () => {
         progress?.('Loading browser AI… first use may need a one-time model download')
-        const moduleUrl: string = TRANSFORMERS_CDN
         let transformers: TransformersModule
         try {
-            transformers = await import(/* @vite-ignore */ moduleUrl) as TransformersModule
+            const runtime = await import('@huggingface/transformers')
+            runtime.env.allowLocalModels = false
+            transformers = runtime as unknown as TransformersModule
         } catch (error) {
             throw new BrowserDepthError('library-download', 'Failed to download the browser AI library', error)
         }
 
         progress?.('Loading Depth Anything V2 model…')
-        const hasWebGpu = typeof navigator !== 'undefined' && 'gpu' in navigator
+        const hasWebGpu = !forceCpu && typeof navigator !== 'undefined' && 'gpu' in navigator
         let webGpuError: unknown = null
         if (hasWebGpu) {
             try {
@@ -149,6 +153,7 @@ async function createEstimator(progress?: Progress) {
                 return await transformers.pipeline('depth-estimation', MODEL_ID, {
                     device: 'webgpu',
                     dtype: 'q4f16',
+                    revision: MODEL_REVISION,
                     progress_callback: (info: ModelProgress) => {
                         if (info?.status === 'progress' && typeof info.progress === 'number') {
                             progress?.(`Loading AI model… ${Math.round(info.progress)}%`)
@@ -165,6 +170,7 @@ async function createEstimator(progress?: Progress) {
         progress?.(hasWebGpu ? 'WebGPU unavailable here · trying browser CPU…' : 'Starting browser CPU depth model…')
         try {
             return await transformers.pipeline('depth-estimation', MODEL_ID, {
+                device: 'wasm', dtype: 'q8', revision: MODEL_REVISION,
                 progress_callback: (info: ModelProgress) => {
                     if (info?.status === 'progress' && typeof info.progress === 'number') {
                         progress?.(`Loading AI model… ${Math.round(info.progress)}%`)
@@ -191,49 +197,15 @@ async function createEstimator(progress?: Progress) {
     }
 }
 
-function depthToPng(depth: DepthImage): Promise<Blob> {
-    const width = Number(depth?.width)
-    const height = Number(depth?.height)
-    const data = depth?.data as Uint8Array | Uint8ClampedArray | undefined
-    if (!width || !height || !data) throw new Error('Browser depth model returned an unreadable depth image')
-
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-    const context = canvas.getContext('2d')
-    if (!context) throw new Error('Canvas is unavailable for browser depth estimation')
-
-    const imageData = context.createImageData(width, height)
-    const pixels = imageData.data
-    const pixelCount = width * height
-
-    if (data.length === pixelCount * 4) {
-        pixels.set(data)
-    } else if (data.length === pixelCount * 3) {
-        for (let i = 0; i < pixelCount; i += 1) {
-            pixels[i * 4] = data[i * 3]
-            pixels[i * 4 + 1] = data[i * 3 + 1]
-            pixels[i * 4 + 2] = data[i * 3 + 2]
-            pixels[i * 4 + 3] = 255
-        }
-    } else {
-        for (let i = 0; i < pixelCount; i += 1) {
-            const value = data[i] ?? 0
-            pixels[i * 4] = value
-            pixels[i * 4 + 1] = value
-            pixels[i * 4 + 2] = value
-            pixels[i * 4 + 3] = 255
-        }
-    }
-
-    context.putImageData(imageData, 0, 0)
-    return new Promise((resolve, reject) => {
-        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not encode browser depth map')), 'image/png')
-    })
+function depthToNpy(prediction: DepthPrediction): Blob {
+    const [height, width] = prediction.dims.slice(-2)
+    const bytes = encodeDepthNpy(normalizedPrediction(prediction.data), width, height)
+    return new Blob([bytes], { type: 'application/octet-stream' })
 }
 
 export const hostedBrowserDepthEnabled = () => {
-    if (!import.meta.env.PROD || typeof window === 'undefined') return false
+    if (typeof window === 'undefined') return false
+    if (import.meta.env.VITE_BROWSER_DEPTH === 'true') return true
     const host = window.location.hostname.toLowerCase()
     return !['localhost', '127.0.0.1', '::1'].includes(host)
 }
@@ -244,26 +216,34 @@ export async function generateBrowserDepth(file: File, progress?: Progress, sele
         const { generateV3Depth } = await import('./browserDepthV3')
         return generateV3Depth(file, progress, generator.name)
     }
-    const estimator = await createEstimator(progress)
+    let estimator = await createEstimator(progress)
     progress?.(`Estimating depth on this device (${estimatorEngine})…`)
     const sourceUrl = URL.createObjectURL(file)
     try {
-        let result: { depth: DepthImage }
+        let result: DepthResult
         try {
             result = await estimator(sourceUrl)
         } catch (error) {
-            throw new BrowserDepthError('inference', 'Depth inference failed after the model loaded', error)
+            if (estimatorEngine === 'WebGPU') {
+                progress?.('GPU inference failed · retrying on browser CPU…')
+                estimatorPromise = null
+                estimator = await createEstimator(progress, true)
+                try { result = await estimator(sourceUrl) }
+                catch (cpuError) { throw new BrowserDepthError('inference', 'GPU and CPU depth inference failed', cpuError) }
+            } else {
+                throw new BrowserDepthError('inference', 'Depth inference failed after the model loaded', error)
+            }
         }
 
         let blob: Blob
         try {
-            blob = await depthToPng(result.depth)
+            blob = depthToNpy(result.predicted_depth)
         } catch (error) {
-            throw new BrowserDepthError('output', 'Depth output could not be converted to PNG', error)
+            throw new BrowserDepthError('output', 'Depth output could not be encoded at full precision', error)
         }
 
         return {
-            file: new File([blob], 'browser-depth-anything-v2.png', { type: 'image/png' }),
+            file: new File([blob], 'browser-depth-anything-v2.npy', { type: 'application/octet-stream' }),
             engine: estimatorEngine,
             generator: generator.name,
         }

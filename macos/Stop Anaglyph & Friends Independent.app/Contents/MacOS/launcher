@@ -1,0 +1,11 @@
+#!/bin/bash
+set -u
+
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+PID_DIR="$HOME/Library/Application Support/Anaglyph-and-Friends-Independent"
+source "$ROOT/macos/launcher-processes.sh"
+
+stop_managed_pid "$PID_DIR/frontend.pid" "$ROOT/frontend/node_modules/vite/bin/vite.js"
+stop_managed_pid "$PID_DIR/backend.pid" "$ROOT/backend/app.py"
+
+/usr/bin/osascript -e 'display notification "Launcher-started servers stopped." with title "Anaglyph & Friends Independent"'

@@ -1,12 +1,18 @@
-# Independent Edition quality gates
+# Acceptance evidence
 
-1. Confirm an uploaded photograph generates Depth Anything V2 depth without requiring a manual map.
-2. Verify a flat grayscale depth map remains flat and retains its absolute 0-to-1 level.
-3. Confirm 16-bit depth maps retain precision.
-4. Verify convergence plane remains stationary and the stereo pair has correct eye ordering.
-5. Test all original specialty modes, including animated GIF and print formats.
-6. Verify batch exports use the result for the corresponding input image.
-7. Compare interface controls, layout, defaults, and output formats with the Legacy Edition.
-8. Check mobile Safari and Mac browsers with real images.
-9. Audit every dependency, model checkpoint, creative asset, and copied source fragment before declaring the project independent.
-10. Do not replace the Legacy Edition until these checks pass.
+- [x] Full React application builds and all specialist components are routed.
+- [x] Preserved frontend feature assertions/math/PDF/batch tests pass.
+- [x] Stereo visibility, background-aware repairs and cache tests pass.
+- [x] Absolute imported depth/convergence tests pass for 8-bit, 16-bit and float32.
+- [x] Pinned local V2 Small weights verified; real-photo inference and stereo output executed.
+- [x] Post-fork provenance reviewed with Git history and upstream comparison.
+- [x] All 17 production recipe requests decoded at preview/full scope, including multi-frame GIFs.
+- [ ] Separate preview deployed and its workload checked.
+- [ ] Real browser V2 inference, GPU startup/inference fallback, optional V3.
+- [ ] Visual comparisons and specialist workspace exports in browser.
+- [ ] Mac Intel/Apple Silicon builds and native frozen smoke tests.
+- [ ] iPhone/iPad real device tests; touch, download, browser memory limits.
+- [ ] Print calibration and physical viewer tests with user's equipment.
+- [ ] Long/nested batch test, pause/retry, ZIP/depth inclusion and memory measurements.
+
+Record concrete results and limitations in WORK_STATE.md. The structural test suite is not an acceptance test for behavior.
