@@ -23,7 +23,19 @@ from stereo_formats import make_anaglyph, compatibility_stereo
 from technique_generator import technique_generator
 from depth_sources import align_depth, normalise_depth
 
-app = Flask(__name__)\n\n\n@app.get("/")\ndef home():\n    return send_from_directory(str(HERE.parent), "index.html")\n\n\n@app.get("/app.js")\ndef frontend_script():\n    return send_from_directory(str(HERE.parent), "app.js")
+app = Flask(__name__)
+
+
+@app.get("/")
+def home():
+    return send_from_directory(str(HERE.parent), "index.html")
+
+
+@app.get("/app.js")
+def frontend_script():
+    return send_from_directory(str(HERE.parent), "app.js")
+
+
 app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
 
 TECHNIQUES = (
