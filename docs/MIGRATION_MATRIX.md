@@ -24,7 +24,24 @@ The user explicitly requires preservation of all original post-fork work and the
 | 17 techniques, print workflows | Developed after fork | Backend API plus `frontend/src/viewMasterPdf.ts`, `phantogramDiagnosticSheet.ts`; UI incomplete | Original post-fork modules preserved; integration incomplete |
 | Mac offline packaging | Developed after fork | Not yet | Preserve after provenance/dependency review |
 
-## Additional preserved original frontend modules\n\n`frontend/src/browserDepthV3.ts`, `frontend/src/depthGenerators.ts`, and `frontend/src/screenDepth.ts` have been preserved alongside the V2 adapter, batch, View-Master, and phantogram modules. These were absent at corresponding paths in the inspected upstream repository. They are not yet all connected to the independent application.\n\n## Release gate
+## Additional preserved original frontend modules\n\n`frontend/src/browserDepthV3.ts`, `frontend/src/depthGenerators.ts`, and `frontend/src/screenDepth.ts` have been preserved alongside the V2 adapter, batch, View-Master, and phantogram modules. These were absent at corresponding paths in the inspected upstream repository. They are not yet all connected to the independent application.\n\n## Preserved original workspace components (2026-10-30)
+
+The following ten substantial React modules have now been transferred from the Legacy Edition after confirming their exact paths are absent in the inspected Huynh upstream repository:
+
+- `ViewMasterBuilder.tsx`: reel design and export workspace.
+- `PhantogramBuilder.tsx`: perspective print workspace.
+- `ColorRevealBuilder.tsx`: color-filter optical experiments.
+- `LayeredCompositeBuilder.tsx`: layered composition.
+- `LayeredTransparencyBuilder.tsx`: transparency output.
+- `PrintCalibrationBuilder.tsx`: print calibration.
+- `PrintPageBuilder.tsx`: page layout and output.
+- `PolarizedProjection.tsx`: polarized projection.
+- `StereoPairUpload.tsx`: stereo source intake.
+- `StereoPairEditor.tsx`: stereo pair controls and editing.
+
+**Important:** These files are preserved, not yet wired into a compiled Independent Edition React application. Their imports, supporting files, assets, and provenance require further review. Path absence alone is not a complete legal clearance.
+
+## Release gate
 
 The prototype is **not a replacement** until real-model inference, all techniques, original editing tools, batch exports, offline Mac packaging, and visual parity have been verified. Keep the Legacy Edition untouched.
 
