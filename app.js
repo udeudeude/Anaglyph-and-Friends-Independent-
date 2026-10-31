@@ -142,9 +142,9 @@ async function renderPreserved(){
   }catch(error){status('Preserved engine: '+error.message)}
   finally{button.disabled=false}
 }
-function render(){
+async function render(){
   if(!image||!depth)return;
-  if(advancedModes.has($('mode').value)){renderPreserved();return}
+  if(advancedModes.has($('mode').value))return renderPreserved();
   const [w,h]=dimensions(image),rgba=raster(image,w,h).data;
   const shift=w*Number($('disp').value)/200,plane=Number($('plane').value);
   const left=view(rgba,depth,w,h,shift,plane),right=view(rgba,depth,w,h,-shift,plane);
@@ -191,11 +191,11 @@ $('runbatch').onclick=async()=>{
     for(let i=0;i<files.length;i++){
       $('batchstatus').textContent='Processing '+(i+1)+' of '+files.length+': '+files[i].name;
       await pause();image=await fileImage(files[i]);originalFile=files[i];depth=null;
-      const [w,h]=dimensions(image);depth=await inferDepth(files[i],w,h);render();
+      const [w,h]=dimensions(image);depth=await inferDepth(files[i],w,h);await render();
       const blob=await new Promise(resolve=>$('result').toBlob(resolve,'image/png'));
       if(blob){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=files[i].name.replace(/\.[^.]+$/,'')+'-independent.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
     }
     $('batchstatus').textContent='Batch finished. '+files.length+' files processed.';
   }catch(error){$('batchstatus').textContent='Batch stopped: '+error.message}
-  finally{image=previous.image;depth=previous.depth;originalFile=previous.originalFile;if(depth)render();$('runbatch').disabled=false}
+  finally{image=previous.image;depth=previous.depth;originalFile=previous.originalFile;if(depth)await render();$('runbatch').disabled=false}
 };
