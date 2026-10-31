@@ -1,6 +1,7 @@
 import * as ort from 'onnxruntime-web/webgpu'
 import { BrowserDepthError } from './browserDepth'
-import { v3InputSize, v3NearPixels } from './depthV3Math'
+import { v3InputSize, v3NearValues } from './depthV3Math'
+import { encodeDepthNpy } from './depthPrecision'
 
 // Pinned ONNX Community export of Apache-2.0 DA3-SMALL. The 100 MB weights
 // stay on the model host and download only when V3 is explicitly selected.
@@ -80,17 +81,6 @@ async function imageTensor(file: File, longestSide: number): Promise<{ tensor: o
     }
 }
 
-async function depthPng(values: ArrayLike<number>, width: number, height: number): Promise<Blob> {
-    const pixels = v3NearPixels(values, width, height)
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-    const context = canvas.getContext('2d')
-    if (!context) throw new Error('Canvas is unavailable for V3 depth output')
-    context.putImageData(new ImageData(pixels, width, height), 0, 0)
-    return new Promise((resolve, reject) => canvas.toBlob(
-        blob => blob ? resolve(blob) : reject(new Error('Could not encode V3 depth map')), 'image/png'))
-}
 
 export async function generateV3Depth(file: File, progress?: Progress, generator = 'Depth Anything V3 Small') {
     const { session, engine } = await createSession(progress)
@@ -114,10 +104,11 @@ export async function generateV3Depth(file: File, progress?: Progress, generator
         if (!depth || depth.dims.join(',') !== `1,1,${input.height},${input.width}`) {
             throw new Error(`Unexpected V3 output dimensions: ${depth?.dims}`)
         }
-        const blob = await depthPng(depth.data as Float32Array, input.width, input.height)
-        return { file: new File([blob], 'browser-depth-anything-v3.png', { type: 'image/png' }), engine, generator }
+        const near = v3NearValues(depth.data as Float32Array, input.width, input.height)
+        const bytes = encodeDepthNpy(near, input.width, input.height)
+        return { file: new File([bytes], 'browser-depth-anything-v3.npy', { type: 'application/octet-stream' }), engine, generator }
     } catch (error) {
-        throw new BrowserDepthError('output', 'V3 depth output could not be converted to PNG', error)
+        throw new BrowserDepthError('output', 'V3 depth output could not be encoded at float32 precision', error)
     } finally {
         for (const output of Object.values(result)) output.dispose()
     }
