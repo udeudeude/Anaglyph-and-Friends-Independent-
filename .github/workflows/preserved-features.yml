@@ -14,7 +14,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install numpy==1.26.4 opencv-python-headless==4.10.0.84 pillow==11.0.0
+      - run: python -m pip install numpy==1.26.4 opencv-python-headless==4.10.0.84 pillow==11.0.0 Flask==3.1.0
       - run: python backend/test_technique_generator.py
       - run: python backend/test_phantogram_generator.py
+      - run: python backend/test_server.py
       - run: python -m compileall -q backend
