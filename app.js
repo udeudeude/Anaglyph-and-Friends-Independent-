@@ -4,6 +4,7 @@ const $ = id => document.getElementById(id);
 const MODEL = 'onnx-community/depth-anything-v2-small';
 const CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/+esm';
 let estimatorPromise, image=null, depth=null, originalFile=null, busy=false;
+let animatedBlob=null, animatedUrl=null;
 const status = message => { $('status').textContent=message; };
 const pause = () => new Promise(resolve => requestAnimationFrame(()=>setTimeout(resolve,0)));
 const fileImage = file => new Promise((resolve,reject)=>{
@@ -110,7 +111,7 @@ function showDepth(z,w,h){
   for(let i=0;i<z.length;i++){const k=i*4,v=Math.round(z[i]*255);rgba[k]=rgba[k+1]=rgba[k+2]=v;rgba[k+3]=255}
   show($('depthview'),rgba,w,h);
 }
-const advancedModes=new Set(['chromadepth','autostereogram','cardboard','stereoscope-card','mirror-stereoscope','rowinterlaced','columninterlaced','checkerboard','lenticular']);
+const advancedModes=new Set(['chromadepth','autostereogram','cardboard','stereoscope-card','mirror-stereoscope','rowinterlaced','columninterlaced','checkerboard','lenticular','wiggle','pulfrich']);
 function encodeDepthPng(z,w,h){
   const rgba=new Uint8ClampedArray(w*h*4);
   for(let i=0;i<z.length;i++){
@@ -134,9 +135,19 @@ async function renderPreserved(){
     status('Rendering with preserved original technique engine…');
     const response=await fetch('/api/render',{method:'POST',body:form});
     if(!response.ok)throw new Error((await response.json().catch(()=>({}))).error||'Rendering service unavailable. Run the local Python server.');
-    const result=await fileImage(await response.blob());
-    const rgba=raster(result,result.naturalWidth,result.naturalHeight);
-    show($('result'),rgba.data,rgba.width,rgba.height);
+    const blob=await response.blob();
+    if(animatedUrl){URL.revokeObjectURL(animatedUrl);animatedUrl=null}
+    animatedBlob=null;
+    if(blob.type.includes('gif')){
+      animatedBlob=blob;animatedUrl=URL.createObjectURL(blob);
+      $('animation').src=animatedUrl;$('animation').hidden=false;
+      $('result').hidden=true;
+    }else{
+      $('animation').hidden=true;$('result').hidden=false;
+      const result=await fileImage(blob);
+      const rgba=raster(result,result.naturalWidth,result.naturalHeight);
+      show($('result'),rgba.data,rgba.width,rgba.height);
+    }
     $('save').disabled=false;
     status('Rendered '+$('mode').value+' using preserved original technique code.');
   }catch(error){status('Preserved engine: '+error.message)}
@@ -145,6 +156,8 @@ async function renderPreserved(){
 async function render(){
   if(!image||!depth)return;
   if(advancedModes.has($('mode').value))return renderPreserved();
+  animatedBlob=null;if(animatedUrl){URL.revokeObjectURL(animatedUrl);animatedUrl=null}
+  $('animation').hidden=true;$('result').hidden=false;
   const [w,h]=dimensions(image),rgba=raster(image,w,h).data;
   const shift=w*Number($('disp').value)/200,plane=Number($('plane').value);
   const left=view(rgba,depth,w,h,shift,plane),right=view(rgba,depth,w,h,-shift,plane);
@@ -179,10 +192,15 @@ for(const id of ['disp','plane','mode'])$(id).addEventListener('input',()=>{
   $('planelabel').textContent=Number($('plane').value).toFixed(2);
   if(depth)render();
 });
-$('save').onclick=()=>$('result').toBlob(blob=>{
-  if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='anaglyph-independent.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
-},'image/png');
+function downloadResult(blob,filename){
+  if(!blob)return;
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+$('save').onclick=()=>{
+  if(animatedBlob){downloadResult(animatedBlob,'anaglyph-independent.gif');return}
+  $('result').toBlob(blob=>downloadResult(blob,'anaglyph-independent.png'),'image/png');
+};
 $('runbatch').onclick=async()=>{
   const files=[...$('batch').files];if(!files.length)return;
   $('runbatch').disabled=true;
