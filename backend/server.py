@@ -13,7 +13,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from PIL import Image
 
 HERE = Path(__file__).resolve().parent
@@ -23,7 +23,7 @@ from stereo_formats import make_anaglyph, compatibility_stereo
 from technique_generator import technique_generator
 from depth_sources import align_depth, normalise_depth
 
-app = Flask(__name__)
+app = Flask(__name__)\n\n\n@app.get("/")\ndef home():\n    return send_from_directory(str(HERE.parent), "index.html")\n\n\n@app.get("/app.js")\ndef frontend_script():\n    return send_from_directory(str(HERE.parent), "app.js")
 app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
 
 TECHNIQUES = (
