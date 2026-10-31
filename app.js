@@ -110,8 +110,41 @@ function showDepth(z,w,h){
   for(let i=0;i<z.length;i++){const k=i*4,v=Math.round(z[i]*255);rgba[k]=rgba[k+1]=rgba[k+2]=v;rgba[k+3]=255}
   show($('depthview'),rgba,w,h);
 }
+const advancedModes=new Set(['chromadepth','autostereogram','cardboard','stereoscope-card','mirror-stereoscope','rowinterlaced','columninterlaced','checkerboard','lenticular']);
+function encodeDepthPng(z,w,h){
+  const rgba=new Uint8ClampedArray(w*h*4);
+  for(let i=0;i<z.length;i++){
+    const k=i*4,value=Math.round(z[i]*255);
+    rgba[k]=rgba[k+1]=rgba[k+2]=value;rgba[k+3]=255;
+  }
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  canvas.getContext('2d').putImageData(new ImageData(rgba,w,h),0,0);
+  return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Depth PNG encoding failed')),'image/png'));
+}
+async function renderPreserved(){
+  if(!image||!depth||!originalFile)return;
+  const button=$('serverrender');button.disabled=true;
+  try{
+    const [w,h]=dimensions(image),map=await encodeDepthPng(depth,w,h),form=new FormData();
+    form.append('image',originalFile,originalFile.name);
+    form.append('depth',map,'ai-depth.png');
+    form.append('technique',$('mode').value);
+    form.append('disparity',$('disp').value);
+    form.append('screen_depth',$('plane').value);
+    status('Rendering with preserved original technique engine…');
+    const response=await fetch('/api/render',{method:'POST',body:form});
+    if(!response.ok)throw new Error((await response.json().catch(()=>({}))).error||'Rendering service unavailable. Run the local Python server.');
+    const result=await fileImage(await response.blob());
+    const rgba=raster(result,result.naturalWidth,result.naturalHeight);
+    show($('result'),rgba.data,rgba.width,rgba.height);
+    $('save').disabled=false;
+    status('Rendered '+$('mode').value+' using preserved original technique code.');
+  }catch(error){status('Preserved engine: '+error.message)}
+  finally{button.disabled=false}
+}
 function render(){
   if(!image||!depth)return;
+  if(advancedModes.has($('mode').value)){renderPreserved();return}
   const [w,h]=dimensions(image),rgba=raster(image,w,h).data;
   const shift=w*Number($('disp').value)/200,plane=Number($('plane').value);
   const left=view(rgba,depth,w,h,shift,plane),right=view(rgba,depth,w,h,-shift,plane);
@@ -129,7 +162,7 @@ async function generate(){
       if(!f)throw Error('Choose a depth map or switch to automatic AI depth.');
       depth=await importedDepth(f,w,h);
     }else depth=await inferDepth(originalFile,w,h);
-    $('render').disabled=false;render();
+    $('render').disabled=false;$('serverrender').disabled=false;render();
   }catch(error){status('Depth generation failed: '+(error?.message||error));console.error(error)}
   finally{$('estimate').disabled=false}
 }
@@ -140,7 +173,7 @@ $('photo').onchange=async e=>{
 };
 $('depthfile').onchange=()=>{if($('depthfile').files[0]){$('depthsource').value='uploaded';if(image)generate()}};
 $('depthsource').onchange=()=>{if(image)generate()};
-$('estimate').onclick=generate;$('render').onclick=render;
+$('estimate').onclick=generate;$('render').onclick=render;$('serverrender').onclick=renderPreserved;
 for(const id of ['disp','plane','mode'])$(id).addEventListener('input',()=>{
   $('displabel').textContent=Number($('disp').value).toFixed(1)+'%';
   $('planelabel').textContent=Number($('plane').value).toFixed(2);
