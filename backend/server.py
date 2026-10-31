@@ -106,11 +106,7 @@ def render(image, depth, technique="anaglyph", disparity=3.0, screen_depth=0.5):
             image, depth, width, height, strength=disparity,
             screen_depth=screen_depth)
     elif technique in ("wiggle", "pulfrich"):
-        frames = (technique_generator.wiggle_frames(image, depth, strength=disparity,
-                  screen_depth=screen_depth) if technique == "wiggle"
-                  else technique_generator.pulfrich_frames(image, depth, strength=disparity,
-                  screen_depth=screen_depth))
-        result = frames[0]
+        raise ValueError("Animation requires the dedicated GIF output path")
     else:
         raise ValueError("Unsupported technique")
     if not isinstance(result, np.ndarray):
@@ -133,6 +129,22 @@ def render_endpoint():
         technique = request.form.get("technique", "anaglyph")
         disparity = float(request.form.get("disparity", 3))
         plane = float(request.form.get("screen_depth", 0.5))
+        if technique in ("wiggle", "pulfrich"):
+            frames = (technique_generator.wiggle_frames(
+                image, depth, strength=disparity, screen_depth=plane)
+                if technique == "wiggle" else technique_generator.pulfrich_frames(
+                    image, depth, strength=disparity, screen_depth=plane))
+            if not frames:
+                raise ValueError("Animation produced no frames")
+            pil_frames = [Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                          for frame in frames]
+            output_gif = io.BytesIO()
+            pil_frames[0].save(output_gif, format="GIF", save_all=True,
+                               append_images=pil_frames[1:],
+                               duration=110, loop=0, optimize=True)
+            output_gif.seek(0)
+            return send_file(output_gif, mimetype="image/gif",
+                             download_name="independent-animation.gif")
         output = render(image, depth, technique, disparity, plane)
         ok, encoded = cv2.imencode(".png", output)
         if not ok:
