@@ -20,6 +20,7 @@ type Props = {
     incomingSource: StudioSource | null
     onIncomingSourceConsumed: () => void
     onOpenInStudio: (source: StudioSource) => void
+    onBackToStudio: () => void
 }
 
 type ReelSlot = {
@@ -170,7 +171,7 @@ function downloadSvg(svg: string, filename: string) {
     window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-function ViewMasterBuilder({ setProcessingStage, incomingSource, onIncomingSourceConsumed, onOpenInStudio }: Props) {
+function ViewMasterBuilder({ setProcessingStage, incomingSource, onIncomingSourceConsumed, onOpenInStudio, onBackToStudio }: Props) {
     const apiUrl = import.meta.env.VITE_FLASK_BACKEND_API_URL || 'http://localhost:8000'
     const useBrowserDepth = hostedBrowserDepthEnabled()
     const [slots, setSlots] = useState<ReelSlot[]>(emptySlots)
@@ -434,6 +435,7 @@ function ViewMasterBuilder({ setProcessingStage, incomingSource, onIncomingSourc
     return (
         <main className="viewMasterMain">
             <section className="viewMasterWorkspace">
+                <button type="button" className="vmBackToStudio" onClick={onBackToStudio}><UiIcon name="back" /> Back to 3D Studio</button>
                 <div className="vmHeader">
                     <div><div className="panelLabel">SEVEN-SCENE PRINT WORKSPACE</div><h2>View-Master Reel Builder</h2></div>
                     <div className="vmGeometry">90 mm reel · 14 stereo frames · actual-size print master</div>
