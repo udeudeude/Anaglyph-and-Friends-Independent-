@@ -37,3 +37,8 @@
 .groundPlaneImage img{display:block;width:100%;height:auto;user-select:none}
 .groundPlaneImage svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.groundPlaneImage polygon{fill:#4b8df81a;stroke:#7bb3ff;stroke-width:.55;vector-effect:non-scaling-stroke}.groundPlaneImage circle{fill:#f7fbff;stroke:#276db8;stroke-width:.45;vector-effect:non-scaling-stroke}.groundPlaneImage text{fill:#fff;font-size:5px;font-weight:800;paint-order:stroke;stroke:#10233a;stroke-width:1px}
 @media(max-width:760px){.phantogramSourceMode{grid-template-columns:1fr}}
+
+.phantogramMeasurementSummary{display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin:14px 0;padding:13px;border:1px solid #476b90;border-radius:9px;background:#10253a;color:#dceafa;font-size:13px;line-height:1.5}
+.phantogramMeasurementSummary strong{font-size:14px}
+.phantogramMeasurementSummary small{color:#a7c0d9}
+.phantogramMeasurementSummary button{min-height:40px;padding:8px 12px;border:1px solid #6389b0;border-radius:7px;background:#1b4267;color:#eef6ff;font:inherit;font-weight:700;cursor:pointer}
