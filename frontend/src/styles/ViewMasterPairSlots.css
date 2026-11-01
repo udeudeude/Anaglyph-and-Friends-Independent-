@@ -68,3 +68,19 @@
 .vmDropCue span { flex:1; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; }
 .vmDropCue span + span { border-left:1px solid #b9d7f7; }
 @media(max-width:900px){ .vmSceneBoard .vmSlot { min-height:0; }.vmMockup { padding:15px; } }
+
+/* A phone must show the entire reel without sideways scrolling or clipping. */
+@media(max-width:700px){
+  .viewMasterMain{padding:14px 12px 30px}
+  .vmSceneBoard{overflow-x:visible;min-width:0}
+  .vmSceneBoard .vmSlotGrid{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:none;min-width:0;width:100%;gap:12px}
+  .vmSceneBoard .vmSlot{grid-column:1!important;grid-row:auto!important;min-width:0}
+  .vmMockup{grid-column:1!important;grid-row:auto!important;order:-1;min-width:0;width:100%;padding:12px;overflow:hidden}
+  .vmMockup svg{width:100%;max-width:100%;height:auto;max-height:none;aspect-ratio:1}
+  .vmMockupHead{flex-wrap:wrap}
+  .vmTitleField{max-width:100%;flex-wrap:wrap}
+  .vmTitleField input{width:100%}
+}
+
+.vmBackToStudio{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin-bottom:12px;padding:9px 14px;border:1px solid #6689ad;border-radius:8px;background:#1b4267;color:#edf6ff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+@media(max-width:700px){.vmBackToStudio{position:sticky;top:4px;z-index:20;background:#214b73;box-shadow:0 5px 18px #05101cb3}}
