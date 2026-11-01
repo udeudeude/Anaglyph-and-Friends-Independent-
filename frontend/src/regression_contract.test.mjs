@@ -59,6 +59,14 @@ required.push(
  [imageUpload,'showDepthGeneration && <div className="depthRegenerate"','hide generation control for unchanged AI map'],
  [read('./depthGenerators.ts'),'generatorDiffersFromActive','compare model identity rather than Automatic label'],
 );
+required.push(
+ [read('./styles/App.css'),'.workspaceModeNav{display:flex!important','phone workspace navigation stays visible'],
+ [read('./styles/ViewMasterPairSlots.css'),'.vmMockup{grid-column:1!important','full reel fits phone screen'],
+ [read('./LayeredTransparencyBuilder.tsx'),'className="transparencySheetSlider"','sheet preview scrubbing slider'],
+ [read('./LayeredTransparencyBuilder.tsx'),'onInput={event => setSelected','sheet preview responds during dragging'],
+ [phantogram,'phantogramMeasurementSummary','physical viewing geometry guide'],
+ [phantogram,'Reset viewing position','restore viewing setup defaults'],
+);
 if(editor.includes("key === 'd'")) throw new Error('Plain D must not trigger a download');
 if(read('./styles/App.css').includes('.downloadAction::before') || read('./styles/App.css').includes('.previewActions > button:not(.downloadAction)::before')) throw new Error('Do not stack CSS icons over button SVG icons');
 let failed=false;for(const [text,needle,label] of required){if(!text.includes(needle)){console.error(`Missing established feature contract: ${label} (${needle})`);failed=true;}}if(failed)process.exit(1);console.log(`Established feature contract passed (${required.length} checks)`);
