@@ -81,3 +81,6 @@
   .vmTitleField{max-width:100%;flex-wrap:wrap}
   .vmTitleField input{width:100%}
 }
+
+.vmBackToStudio{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin-bottom:12px;padding:9px 14px;border:1px solid #6689ad;border-radius:8px;background:#1b4267;color:#edf6ff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+@media(max-width:700px){.vmBackToStudio{position:sticky;top:4px;z-index:20;background:#214b73;box-shadow:0 5px 18px #05101cb3}}
