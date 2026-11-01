@@ -24,7 +24,11 @@ The user explicitly requires preservation of all original post-fork work and the
 | 17 techniques, print workflows | Developed after fork | Backend API plus `frontend/src/viewMasterPdf.ts`, `phantogramDiagnosticSheet.ts`; UI incomplete | Original post-fork modules preserved; integration incomplete |
 | Mac offline packaging | Developed after fork | Not yet | Preserve after provenance/dependency review |
 
-## Additional preserved original frontend modules\n\n`frontend/src/browserDepthV3.ts`, `frontend/src/depthGenerators.ts`, and `frontend/src/screenDepth.ts` have been preserved alongside the V2 adapter, batch, View-Master, and phantogram modules. These were absent at corresponding paths in the inspected upstream repository. They are not yet all connected to the independent application.\n\n## Preserved original workspace components (2026-10-30)
+## Additional preserved original frontend modules
+
+`frontend/src/browserDepthV3.ts`, `frontend/src/depthGenerators.ts`, and `frontend/src/screenDepth.ts` have been preserved alongside the V2 adapter, batch, View-Master, and phantogram modules. These were absent at corresponding paths in the inspected upstream repository. They are not yet all connected to the independent application.
+
+## Preserved original workspace components (2026-10-30)
 
 The following ten substantial React modules have now been transferred from the Legacy Edition after confirming their exact paths are absent in the inspected Huynh upstream repository:
 
@@ -52,3 +56,8 @@ The prototype is **not a replacement** until real-model inference, all technique
 3. Reconnect preserved Python functionality to a complete application without losing AI inference.
 4. Run all legacy tests plus browser/device visual acceptance checks.
 5. Verify third-party model and checkpoint licenses before public release.
+
+
+## Integrated 2026-10-31
+
+The above is the pre-integration snapshot. The React application, preserved dependencies/styles and complete API are now assembled. Current file-level evidence is in PROVENANCE.json and PROVENANCE_REVIEW.md; tested status and remaining gates are in WORK_STATE.md and QA_CHECKLIST.md.

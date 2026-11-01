@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/dist
+**/__pycache__
+**/*.pyc
+**/.env
+backend/ai_models
+resources
+artifacts
+build

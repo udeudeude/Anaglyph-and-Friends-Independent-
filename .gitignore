@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
+.env
+resources/
+backend/ai_models/
+artifacts/
+.DS_Store

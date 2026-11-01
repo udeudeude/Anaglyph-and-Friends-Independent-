@@ -1,0 +1,8 @@
+{
+  "name": "anaglyph-friends-independent",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "python scripts/check.py"
+  }
+}

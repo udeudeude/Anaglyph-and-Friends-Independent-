@@ -1,0 +1,74 @@
+import './styles/App.css'
+import './styles/StudioSourceModes.css'
+import ImageUpload from './ImageUpload.tsx'
+import { useEffect, useState } from 'react'
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react'
+import AnaglyphEditor from './AnaglyphEditor.tsx'
+import ViewMasterBuilder from './ViewMasterBuilder.tsx'
+import PhantogramBuilder from './PhantogramBuilder.tsx'
+import ColorRevealBuilder from './ColorRevealBuilder.tsx'
+import LayeredCompositeBuilder from './LayeredCompositeBuilder.tsx'
+import LayeredTransparencyBuilder from './LayeredTransparencyBuilder.tsx'
+import PrintCalibrationBuilder from './PrintCalibrationBuilder.tsx'
+import PrintPageBuilder from './PrintPageBuilder.tsx'
+import UiIcon from './UiIcon.tsx'
+import PolarizedProjection from './PolarizedProjection.tsx'
+import StereoPairUpload from './StereoPairUpload.tsx'
+import StereoPairEditor from './StereoPairEditor.tsx'
+import type { StereoPairDraft, StudioSource } from './studioAssets.ts'
+import { hostedBrowserDepthEnabled } from './browserDepth.ts'
+import type { BatchDepthSettings } from './batchProcessing'
+import type { PrintPageIncomingArtwork } from './printPageAssets.ts'
+
+type ProcessingStage = 'idle' | 'uploading' | 'depth' | 'stereo' | 'technique' | 'full' | 'ready' | 'error'
+type WorkspaceMode = 'studio' | 'viewmaster' | 'polarized'
+type StudioSurface = 'editor' | 'phantogram' | 'colorreveal' | 'layered' | 'transparency' | 'printcalibration' | 'printpage'
+type StudioInputMode = 'single' | 'pair'
+
+const stageLabels: Record<ProcessingStage, string> = {
+    idle: 'Processing locally', uploading: 'Loading original…', depth: 'Estimating depth…', stereo: 'Building stereo views…', technique: 'Rendering selected technique…', full: 'Rendering full resolution…', ready: 'Ready · processing locally', error: 'Processing error',
+}
+
+function IndependentWorkspace() {
+    const hostedEdition = hostedBrowserDepthEnabled()
+    const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>('studio')
+    const [studioSurface, setStudioSurface] = useState<StudioSurface>('editor')
+    const [studioInputMode, setStudioInputMode] = useState<StudioInputMode>('single')
+    const [singleSourceFile, setSingleSourceFile] = useState<File | null>(null)
+    const [incomingSingleFile, setIncomingSingleFile] = useState<File | null>(null)
+    const [stereoPair, setStereoPair] = useState<StereoPairDraft>({ left: null, right: null })
+    const [viewMasterIncoming, setViewMasterIncoming] = useState<StudioSource | null>(null)
+    const [printPageIncoming, setPrintPageIncoming] = useState<PrintPageIncomingArtwork | null>(null)
+    const [batchDepthSettings, setBatchDepthSettings] = useState<BatchDepthSettings>({ generator: 'automatic', invert: false })
+    const [isDepthMapReady, setIsDepthMapReady] = useState(false)
+    const [isChangeAllowed, setIsChangeAllowed] = useState(true)
+    const [processingStage, setProcessingStage] = useState<ProcessingStage>('idle')
+    const [sidebarWidth, setSidebarWidth] = useState<number>(280)
+    const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('aaf-sidebar-collapsed') === 'true')
+    const pairReady = !!stereoPair.left && !!stereoPair.right
+    const currentStudioSource: StudioSource | null = studioInputMode === 'single' ? (singleSourceFile ? { kind: 'single', file: singleSourceFile } : null) : (pairReady ? { kind: 'pair', left: stereoPair.left as File, right: stereoPair.right as File } : null)
+
+    useEffect(() => { localStorage.setItem('aaf-sidebar-collapsed', String(sidebarCollapsed)) }, [sidebarCollapsed])
+    const switchWorkspace = (mode: WorkspaceMode) => { setWorkspaceMode(mode); if (mode !== 'studio') setProcessingStage('idle'); else if (studioInputMode === 'single') setProcessingStage(isDepthMapReady ? 'ready' : 'idle'); else setProcessingStage(pairReady ? 'ready' : 'idle') }
+    const switchInputMode = (mode: StudioInputMode) => { setStudioInputMode(mode); setStudioSurface('editor'); setProcessingStage(mode === 'single' ? (isDepthMapReady ? 'ready' : 'idle') : (pairReady ? 'ready' : 'idle')) }
+    const sendToViewMaster = (source: StudioSource | null = currentStudioSource) => { if (!source) return; setViewMasterIncoming(source); switchWorkspace('viewmaster') }
+    const openInStudio = (source: StudioSource) => { setStudioSurface('editor'); if (source.kind === 'single') { setStudioInputMode('single'); setSingleSourceFile(source.file); setIncomingSingleFile(source.file); setIsDepthMapReady(false); setProcessingStage('uploading') } else { setStudioInputMode('pair'); setStereoPair({ left: source.left, right: source.right }); setProcessingStage('ready') } setWorkspaceMode('studio') }
+    const openPrintPage = () => { setPrintPageIncoming(null); setStudioSurface('printpage') }
+    const sendOutputToPrintPage = (incoming: PrintPageIncomingArtwork) => { setPrintPageIncoming(incoming); setStudioSurface('printpage') }
+    const beginResize = (event: ReactMouseEvent<HTMLDivElement>) => { if (sidebarCollapsed) return; event.preventDefault(); const startX = event.clientX, startWidth = sidebarWidth; const move = (moveEvent: MouseEvent) => { const next = Math.max(220, Math.min(430, startWidth + moveEvent.clientX - startX)); setSidebarWidth(next) }; const stop = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); document.body.classList.remove('resizingRail') }; document.body.classList.add('resizingRail'); document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop) }
+    const workspaceStyle = { '--sidebar-width': `${sidebarWidth}px` } as CSSProperties
+    const visibleStageLabel = hostedEdition && processingStage === 'ready'
+        ? 'Ready · browser AI + hosted rendering'
+        : hostedEdition && processingStage === 'idle'
+            ? 'Browser AI workspace'
+            : stageLabels[processingStage]
+    const processing = !['idle', 'ready', 'error'].includes(processingStage)
+
+    return <div className="appShell">
+        <header className="topBar"><div><div className="brandEyebrow">{hostedEdition ? 'INDEPENDENT · WEB AI 3D WORKSPACE' : 'INDEPENDENT · LOCAL AI 3D WORKSPACE'}</div><a className="sourceLicenseLink" href="./source" title="AGPL-3.0-or-later corresponding source">Source</a><h1 className="brandTitle">Anaglyph &amp; Friends</h1></div><div className={`topBarActions ${processing || processingStage === 'error' ? 'statusActive' : ''}`}><nav className="workspaceModeNav" aria-label="Workspace"><button className={workspaceMode === 'studio' ? 'active' : ''} onClick={() => switchWorkspace('studio')}>3D Studio</button><button className={workspaceMode === 'viewmaster' ? 'active' : ''} onClick={() => switchWorkspace('viewmaster')}>View-Master Reel</button><button className={workspaceMode === 'polarized' ? 'active' : ''} onClick={() => switchWorkspace('polarized')}>Polarized Projection</button></nav><div className={`localBadge stage-${processingStage}`} aria-live="polite"><div className="stageStatusText"><span className="statusDot" /> <span>{visibleStageLabel}</span></div>{processing && <div className="stageProgressTrack" role="progressbar" aria-label={visibleStageLabel} aria-valuetext="Working; completion time is not yet known"><span className="stageProgressFill" /></div>}</div></div></header>
+        <div hidden={workspaceMode !== 'studio'}><main className={`workspace ${sidebarCollapsed ? 'railCollapsed' : ''}`} style={workspaceStyle}><aside className="controlRail"><button className="collapseRail" onClick={() => setSidebarCollapsed(true)} title="Collapse source panel" aria-label="Collapse source panel">‹</button><div className="sourceModeSwitch" aria-label="Source type"><button className={studioInputMode === 'single' ? 'active' : ''} onClick={() => switchInputMode('single')}>Single image</button><button className={studioInputMode === 'pair' ? 'active' : ''} onClick={() => switchInputMode('pair')}>Stereo pair</button></div>{studioInputMode === 'single' ? <ImageUpload onDepthRecipeChange={setBatchDepthSettings} setIsDepthMapReadyStateLifter={setIsDepthMapReady} isChangeAllowed={isChangeAllowed} setIsChangeAllowed={setIsChangeAllowed} setProcessingStage={setProcessingStage} onSourceFile={setSingleSourceFile} incomingSourceFile={incomingSingleFile} onIncomingSourceConsumed={() => setIncomingSingleFile(null)} /> : <StereoPairUpload pair={stereoPair} onChange={(next) => { setStereoPair(next); setProcessingStage(next.left && next.right ? 'ready' : 'idle') }} />}<button className="sourceTransferAction" disabled={!currentStudioSource} onClick={() => sendToViewMaster()}>{studioInputMode === 'pair' ? 'Add current pair to View-Master' : 'Add current image to View-Master'}</button></aside><div className="railResizer" onMouseDown={beginResize} title="Drag to resize source panel" /><section className="stagePanel">{sidebarCollapsed && <button className="expandRail" onClick={() => setSidebarCollapsed(false)} title="Show source panel">› Source</button>}{studioSurface === 'printpage' ? <div className="embeddedTechniqueSurface"><button className="returnToTechniques" onClick={() => setStudioSurface('editor')}><UiIcon name="back" /> Back to 3D techniques</button><PrintPageBuilder setProcessingStage={setProcessingStage} incomingArtwork={printPageIncoming} onIncomingArtworkConsumed={() => setPrintPageIncoming(null)} /></div> : studioInputMode === 'pair' ? <StereoPairEditor pair={stereoPair} setProcessingStage={setProcessingStage} onSendToViewMaster={() => sendToViewMaster()} onPreparePrintPage={sendOutputToPrintPage} /> : studioSurface === 'phantogram' ? <div className="embeddedTechniqueSurface"><button className="returnToTechniques" onClick={() => setStudioSurface('editor')}><UiIcon name="back" /> Back to 3D techniques</button><PhantogramBuilder isDepthMapReady={isDepthMapReady} sourceFile={singleSourceFile} setProcessingStage={setProcessingStage} /></div> : studioSurface === 'colorreveal' ? <div className="embeddedTechniqueSurface"><button className="returnToTechniques" onClick={() => setStudioSurface('editor')}><UiIcon name="back" /> Back to 3D techniques</button><ColorRevealBuilder setProcessingStage={setProcessingStage} /></div> : studioSurface === 'layered' ? <div className="embeddedTechniqueSurface"><button className="returnToTechniques" onClick={() => setStudioSurface('editor')}><UiIcon name="back" /> Back to 3D techniques</button><LayeredCompositeBuilder isDepthMapReady={isDepthMapReady} setProcessingStage={setProcessingStage} /></div> : studioSurface === 'transparency' ? <div className="embeddedTechniqueSurface"><button className="returnToTechniques" onClick={() => setStudioSurface('editor')}><UiIcon name="back" /> Back to 3D techniques</button><LayeredTransparencyBuilder isDepthMapReady={isDepthMapReady} sourceFile={singleSourceFile} setProcessingStage={setProcessingStage} /></div> : studioSurface === 'printcalibration' ? <div className="embeddedTechniqueSurface"><button className="returnToTechniques" onClick={() => setStudioSurface('editor')}><UiIcon name="back" /> Back to 3D techniques</button><PrintCalibrationBuilder setProcessingStage={setProcessingStage} /></div> : <AnaglyphEditor depthSettings={batchDepthSettings} isDepthMapReady={isDepthMapReady} isChangeAllowed={isChangeAllowed} setIsChangeAllowed={setIsChangeAllowed} setProcessingStage={setProcessingStage} onOpenPhantogram={() => setStudioSurface('phantogram')} onOpenColorReveal={() => setStudioSurface('colorreveal')} onOpenLayered={() => setStudioSurface('layered')} onOpenTransparency={() => setStudioSurface('transparency')} onOpenPrintCalibration={() => setStudioSurface('printcalibration')} onOpenPrintPage={openPrintPage} onPreparePrintPage={sendOutputToPrintPage} />}</section></main></div>
+        <div hidden={workspaceMode !== 'viewmaster'}><ViewMasterBuilder setProcessingStage={setProcessingStage} incomingSource={viewMasterIncoming} onIncomingSourceConsumed={() => setViewMasterIncoming(null)} onOpenInStudio={openInStudio} /></div>
+        <div hidden={workspaceMode !== 'polarized'}><PolarizedProjection pair={studioInputMode === 'pair' ? stereoPair : null} generatedPairAvailable={studioInputMode === 'single' && isDepthMapReady} setProcessingStage={setProcessingStage} /></div>
+    </div>
+}
+export default IndependentWorkspace

@@ -1,54 +1,39 @@
-"""API regression tests using synthetic imagery, no downloaded model required."""
+"""Exercise all 17 actual Studio request contracts through Flask, decode outputs."""
 from io import BytesIO
-
-import cv2
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
+import json
 import numpy as np
-
-from server import app, render, TECHNIQUES
-
-
-def synthetic():
-    image = np.zeros((24, 40, 3), dtype=np.uint8)
-    image[:] = [70, 120, 180]
-    image[4:20, 14:26] = [20, 40, 240]
-    depth = np.zeros((24, 40), dtype=np.float32)
-    depth[4:20, 14:26] = 1.0
-    return image, depth
+from PIL import Image
+import app as backend
 
 
-def test_all_core_outputs():
-    image, depth = synthetic()
-    for name in ("anaglyph", "parallel", "cross", "left", "right",
-                 "chromadepth", "autostereogram", "rowinterlaced",
-                 "columninterlaced", "checkerboard"):
-        result = render(image, depth, name, disparity=4)
-        assert result.ndim == 3 and result.shape[2] == 3, name
-        assert result.size > 0, name
+def main():
+ catalog=json.loads((Path(__file__).parents[1]/'docs/TECHNIQUE_INVENTORY.json').read_text())
+ assert len(catalog['techniques'])==17
+ with TemporaryDirectory() as directory, patch.object(backend,'SESSION_DATA_FOLDER',directory):
+  client=backend.app.test_client()
+  assert client.post('/image').status_code==400
+  yy,xx=np.indices((96,160));rgb=np.stack([xx*255//160, yy*255//96, (xx+yy)%256],axis=-1).astype('uint8')
+  image=BytesIO();Image.fromarray(rgb).save(image,'PNG');image.seek(0)
+  assert client.post('/image',data={'file':(image,'source.png')}).status_code==200
+  depth=BytesIO();np.save(depth,(xx/160).astype('float32'));depth.seek(0)
+  assert client.post('/depth-map/ai-import',data={'file':(depth,'depth.npy')}).status_code==200
+  for technique in catalog['techniques']:
+   for scope in ('preview','full'):
+    response=client.get(technique[scope])
+    assert response.status_code==200,(technique['id'],scope,response.data[:500])
+    decoded=Image.open(BytesIO(response.data));decoded.load()
+    assert min(decoded.size)>0
+    if technique['id'] in ('wiggle','pulfrich'):assert getattr(decoded,'n_frames',1)>1
+   print('Integrated technique:',technique['id'])
+  for kind in ('gray16','npy','color'):
+   r=client.get('/depth-map/download?kind='+kind);assert r.status_code==200,(kind,r.data)
+  for path in ('/phantogram/calibration','/lenticular/calibration','/special/phantogram'):
+   r=client.get(path);assert r.status_code==200,(path,r.data[:500])
+  for action in ({'operation':'adjust','black':.1,'white':.9,'gamma':1.2},{'operation':'undo'},{'operation':'redo'}):
+   r=client.post('/depth-map/edit',json=action);assert r.status_code==200,r.data
+ print('17 techniques at preview/full scope, animation frames, depth downloads and calibration routes passed')
 
-
-def test_upload_to_png():
-    image, depth = synthetic()
-    _, photo = cv2.imencode(".png", image)
-    _, map_png = cv2.imencode(".png", np.uint8(depth * 255))
-    with app.test_client() as client:
-        result = client.post("/api/render", data={
-            "image": (BytesIO(photo.tobytes()), "source.png"),
-            "depth": (BytesIO(map_png.tobytes()), "depth.png"),
-            "technique": "anaglyph",
-            "disparity": "3",
-        })
-        assert result.status_code == 200, result.get_data(as_text=True)[:300]
-        assert result.mimetype == "image/png"
-        assert cv2.imdecode(np.frombuffer(result.data, np.uint8), 1).shape == image.shape
-
-
-def test_invalid_upload():
-    with app.test_client() as client:
-        response = client.post("/api/render", data={})
-        assert response.status_code == 400
-
-
-if __name__ == "__main__":
-    test_all_core_outputs()
-    test_upload_to_png()
-    test_invalid_upload()
+if __name__=='__main__':main()
