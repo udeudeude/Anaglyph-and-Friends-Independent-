@@ -61,6 +61,8 @@ required.push(
 );
 required.push(
  [read('./styles/App.css'),'.workspaceModeNav{display:flex!important','phone workspace navigation stays visible'],
+ [viewMaster,'vmBackToStudio','View-Master explicit return button'],
+ [app,'onBackToStudio={() => switchWorkspace(\'studio\')}','View-Master back action wired'],
  [read('./styles/ViewMasterPairSlots.css'),'.vmMockup{grid-column:1!important','full reel fits phone screen'],
  [read('./LayeredTransparencyBuilder.tsx'),'className="transparencySheetSlider"','sheet preview scrubbing slider'],
  [read('./LayeredTransparencyBuilder.tsx'),'onInput={event => setSelected','sheet preview responds during dragging'],
