@@ -7,7 +7,7 @@ export async function foregroundDepthPng(npy: File, source: File): Promise<File>
     if (magic.some((n,i)=>view.getUint8(i)!==n) || view.getUint8(6)!==1) throw new Error('Unexpected depth map format')
     const headerSize = view.getUint16(8,true)
     const header = new TextDecoder().decode(new Uint8Array(bytes,10,headerSize))
-    if (!header.includes("'<f4'") && !header.includes("'<f4'".replaceAll("'",'"'))) throw new Error('Expected float32 depth')
+    if (!header.includes('f4')) throw new Error('Expected float32 depth')
     const match = header.match(/'shape':\s*\((\d+),\s*(\d+)\)/)
     if (!match) throw new Error('Depth dimensions are missing')
     const height = Number(match[1]), width = Number(match[2])
