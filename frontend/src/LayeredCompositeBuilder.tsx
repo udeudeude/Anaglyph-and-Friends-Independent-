@@ -218,6 +218,7 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
     const [loading, setLoading] = useState(false)
     const [downloading, setDownloading] = useState(false)
     const [error, setError] = useState('')
+    const depthRequest = useRef(0)
     const [depthBusy, setDepthBusy] = useState(false)
     const [depthProgress, setDepthProgress] = useState('')
     const drag = useRef<{pointer:number; x:number; y:number; startX:number; startY:number; width:number; height:number} | null>(null)
@@ -356,6 +357,7 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
 
     const generateForegroundDepth = async () => {
         if (!foreground || depthBusy) return
+        const request = ++depthRequest.current
         setDepthBusy(true);setError('');setDepthProgress('Preparing foreground…')
         try {
             // The model expects opaque RGB. Matte transparency onto neutral white
@@ -371,10 +373,10 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
                 prepared=new File([blob],'foreground-for-ai.png',{type:'image/png'})
             }finally{bitmap.close()}
             const result=await generateBrowserDepth(prepared,message=>setDepthProgress(message))
-            setLayerDepth(await foregroundDepthPng(result.file,foreground))
-            setDepthProgress('Foreground AI depth ready')
-        }catch(caught){setError(caught instanceof Error?caught.message:'Foreground depth generation failed')}
-        finally{setDepthBusy(false)}
+            const generated=await foregroundDepthPng(result.file,foreground)
+            if(request===depthRequest.current){setLayerDepth(generated);setDepthProgress('Foreground AI depth ready')}
+        }catch(caught){if(request===depthRequest.current)setError(caught instanceof Error?caught.message:'Foreground depth generation failed')}
+        finally{if(request===depthRequest.current)setDepthBusy(false)}
     }
 
     const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -396,6 +398,8 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
 
     const chooseForeground = (file: File | undefined) => {
         if (!file || !file.type.startsWith('image/')) return
+        depthRequest.current++
+        setDepthBusy(false)
         setForeground(file)
         setLayerDepth(null)
         setDepthProgress('')
@@ -424,6 +428,8 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
             if (project?.format !== 'Anaglyph & Friends layered project') throw new Error('Not an Anaglyph & Friends layered project')
             setSettings({ ...defaults, ...(project.settings || {}) })
             if (['anaglyph', 'parallel', 'cross', 'left', 'right'].includes(project.mode)) setMode(project.mode)
+            depthRequest.current++
+            setDepthBusy(false)
             setForeground(project.foreground?.data ? await dataUrlToFile(project.foreground.data, project.foreground.name || 'foreground.png', project.foreground.type || 'image/png') : null)
             setLayerDepth(project.depth?.data ? await dataUrlToFile(project.depth.data, project.depth.name || 'foreground-depth.png', project.depth.type || 'image/png') : null)
             setError('')
@@ -442,7 +448,7 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
         <div className="layeredGrid">
             <section className="layeredControls">
                 <div className="layeredFiles">
-                    <div><strong>Foreground object</strong><span>{foreground?.name || 'Transparent PNG/WebP recommended'}</span><button onClick={() => foregroundInput.current?.click()}><UiIcon name="upload" /> {foreground ? 'Replace foreground' : 'Choose foreground'}</button>{foreground && <button onClick={() => setForeground(null)}><UiIcon name="close" /> Remove</button>}</div>
+                    <div><strong>Foreground object</strong><span>{foreground?.name || 'Transparent PNG/WebP recommended'}</span><button onClick={() => foregroundInput.current?.click()}><UiIcon name="upload" /> {foreground ? 'Replace foreground' : 'Choose foreground'}</button>{foreground && <button onClick={() => { depthRequest.current++;setDepthBusy(false);setForeground(null);setLayerDepth(null);setDepthProgress('') }}><UiIcon name="close" /> Remove</button>}</div>
                     <div><strong>Optional object depth</strong><span>{layerDepth?.name || 'Grayscale image aligned to foreground'}</span><button onClick={() => depthInput.current?.click()}><UiIcon name="upload" /> {layerDepth ? 'Replace object depth' : 'Choose object depth'}</button><button type="button" disabled={!foreground || depthBusy} onClick={() => void generateForegroundDepth()}>{depthBusy?'Generating AI depth…':'Generate AI depth for object'}</button><small aria-live="polite">{depthProgress}</small>{layerDepth && <button onClick={() => setLayerDepth(null)}><UiIcon name="close" /> Remove</button>}</div>
                     <input ref={foregroundInput} type="file" accept="image/png,image/webp,image/jpeg" onChange={event => { chooseForeground(event.target.files?.[0]); event.currentTarget.value = '' }} />
                     <input ref={depthInput} type="file" accept="image/png,image/webp,image/jpeg" onChange={event => { chooseDepth(event.target.files?.[0]); event.currentTarget.value = '' }} />
