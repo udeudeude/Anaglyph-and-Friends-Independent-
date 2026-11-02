@@ -69,6 +69,13 @@ required.push(
  [phantogram,'phantogramMeasurementSummary','physical viewing geometry guide'],
  [phantogram,'Reset viewing position','restore viewing setup defaults'],
 );
+required.push(
+ [read('./LayeredCompositeBuilder.tsx'),'generateForegroundDepth','independent foreground AI depth generation'],
+ [read('./LayeredCompositeBuilder.tsx'),'foregroundDepthPng(result.file,foreground)','AI map aligned to foreground'],
+ [read('./LayeredCompositeBuilder.tsx'),'onPointerMove={moveDrag}','direct touch/mouse XY placement'],
+ [read('./LayeredCompositeBuilder.tsx'),'setLayerDepth(null)','invalidate stale object depth on replacement'],
+ [read('./foregroundDepth.ts'),'getFloat32','float32 depth map decoded for object relief'],
+);
 if(editor.includes("key === 'd'")) throw new Error('Plain D must not trigger a download');
 if(read('./styles/App.css').includes('.downloadAction::before') || read('./styles/App.css').includes('.previewActions > button:not(.downloadAction)::before')) throw new Error('Do not stack CSS icons over button SVG icons');
 let failed=false;for(const [text,needle,label] of required){if(!text.includes(needle)){console.error(`Missing established feature contract: ${label} (${needle})`);failed=true;}}if(failed)process.exit(1);console.log(`Established feature contract passed (${required.length} checks)`);
