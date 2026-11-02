@@ -1,0 +1,132 @@
+{
+  "baseline": "udeudeude/Anaglyph-and-Friends",
+  "baseline_commit": "c4e698d2cf4610964408c0ff69a71f8735d406e8",
+  "note": "The baseline hashes below were checked against the Legacy default branch on 2026-11-02. Exact equality proves source preservation for the file, not behavioral equivalence of the whole application.",
+  "modules": [
+    {
+      "path": "frontend/src/AnaglyphEditor.tsx",
+      "legacy_sha_prefix": "9aa7b9a4",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/TechniqueControls.tsx",
+      "legacy_sha_prefix": "76d7eaa9",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/ImageUpload.tsx",
+      "legacy_sha_prefix": "dca71498",
+      "handling": "adapted"
+    },
+    {
+      "path": "frontend/src/StereoPairEditor.tsx",
+      "legacy_sha_prefix": "366cdd8b",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/ViewMasterBuilder.tsx",
+      "legacy_sha_prefix": "3953c849",
+      "handling": "adapted"
+    },
+    {
+      "path": "frontend/src/PolarizedProjection.tsx",
+      "legacy_sha_prefix": "d9f83474",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/PhantogramBuilder.tsx",
+      "legacy_sha_prefix": "ab0cd2c4",
+      "handling": "adapted"
+    },
+    {
+      "path": "frontend/src/ColorRevealBuilder.tsx",
+      "legacy_sha_prefix": "8d5a1675",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/LayeredCompositeBuilder.tsx",
+      "legacy_sha_prefix": "ca1ff756",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/LayeredTransparencyBuilder.tsx",
+      "legacy_sha_prefix": "25a189a2",
+      "handling": "adapted"
+    },
+    {
+      "path": "frontend/src/PrintCalibrationBuilder.tsx",
+      "legacy_sha_prefix": "4d3fd7b5",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/PrintPageBuilder.tsx",
+      "legacy_sha_prefix": "1e915fe1",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/techniques.ts",
+      "legacy_sha_prefix": "9c46b0f8",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/batchProcessing.ts",
+      "legacy_sha_prefix": "3da71f73",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/viewMasterPdf.ts",
+      "legacy_sha_prefix": "5608acb7",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/DepthGeneratorSelector.tsx",
+      "legacy_sha_prefix": "510e6610",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/depthGenerators.ts",
+      "legacy_sha_prefix": "428be8a6",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/screenDepth.ts",
+      "legacy_sha_prefix": "4d94daf4",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/layeredTransparency.ts",
+      "legacy_sha_prefix": "9dc7d03a",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/layeredTransparencyPdf.ts",
+      "legacy_sha_prefix": "98481395",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/batchZip.ts",
+      "legacy_sha_prefix": "25ae616f",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/BatchWorkspace.tsx",
+      "legacy_sha_prefix": "64d3f515",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/groundPlaneReference.ts",
+      "legacy_sha_prefix": "9ac4bac2",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/modelPhantogram.ts",
+      "legacy_sha_prefix": "eae79653",
+      "handling": "exact"
+    },
+    {
+      "path": "frontend/src/phantogramDiagnosticSheet.ts",
+      "legacy_sha_prefix": "04a6f88c",
+      "handling": "exact"
+    }
+  ]
+}
