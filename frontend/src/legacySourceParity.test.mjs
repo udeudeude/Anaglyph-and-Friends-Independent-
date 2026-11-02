@@ -6,7 +6,7 @@ const entries=manifest.modules;
 assert.equal(entries.length,25,'Expected 25 compared source modules');
 for(const item of entries){
   const content=readFileSync(new URL('../../'+item.path,import.meta.url));
-  const gitBlob=createHash('sha1').update('blob '+content.length+'\\0').update(content).digest('hex');
+  const gitBlob=createHash('sha1').update('blob '+content.length+String.fromCharCode(0)).update(content).digest('hex');
   if(item.handling==='exact'){
     assert.ok(gitBlob.startsWith(item.legacy_sha_prefix),'Original post-fork source changed unexpectedly: '+item.path);
   }else{
