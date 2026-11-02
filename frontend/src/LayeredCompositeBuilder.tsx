@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
+import { generateBrowserDepth } from './browserDepth'
+import { foregroundDepthPng } from './foregroundDepth'
 import { mergeStoredSettings } from './techniques'
 import './styles/LayeredCompositeBuilder.css'
 import UiIcon from './UiIcon'
@@ -215,6 +218,9 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
     const [loading, setLoading] = useState(false)
     const [downloading, setDownloading] = useState(false)
     const [error, setError] = useState('')
+    const [depthBusy, setDepthBusy] = useState(false)
+    const [depthProgress, setDepthProgress] = useState('')
+    const drag = useRef<{pointer:number; x:number; y:number; startX:number; startY:number; width:number; height:number} | null>(null)
 
     const foregroundUrl = useMemo(() => foreground ? URL.createObjectURL(foreground) : null, [foreground])
     useEffect(() => () => { if (foregroundUrl) URL.revokeObjectURL(foregroundUrl) }, [foregroundUrl])
@@ -348,9 +354,51 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
         }
     }
 
+    const generateForegroundDepth = async () => {
+        if (!foreground || depthBusy) return
+        setDepthBusy(true);setError('');setDepthProgress('Preparing foreground…')
+        try {
+            // The model expects opaque RGB. Matte transparency onto neutral white
+            // for inference; retain the original PNG alpha for the actual composite.
+            const bitmap=await createImageBitmap(foreground)
+            let prepared: File
+            try {
+                const canvas=makeCanvas(bitmap.width,bitmap.height)
+                const ctx=canvas.getContext('2d')!
+                ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height)
+                ctx.drawImage(bitmap,0,0)
+                const blob=await canvasBlob(canvas)
+                prepared=new File([blob],'foreground-for-ai.png',{type:'image/png'})
+            }finally{bitmap.close()}
+            const result=await generateBrowserDepth(prepared,message=>setDepthProgress(message))
+            setLayerDepth(await foregroundDepthPng(result.file,foreground))
+            setDepthProgress('Foreground AI depth ready')
+        }catch(caught){setError(caught instanceof Error?caught.message:'Foreground depth generation failed')}
+        finally{setDepthBusy(false)}
+    }
+
+    const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+        if (!foreground || event.button!==0) return
+        const bounds=event.currentTarget.getBoundingClientRect()
+        drag.current={pointer:event.pointerId,x:event.clientX,y:event.clientY,startX:settings.xPct,startY:settings.yPct,width:bounds.width,height:bounds.height}
+        event.currentTarget.setPointerCapture(event.pointerId)
+    }
+    const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+        const start=drag.current
+        if(!start || start.pointer!==event.pointerId) return
+        patch({xPct:Math.max(-20,Math.min(120,start.startX+(event.clientX-start.x)/start.width*100)),
+               yPct:Math.max(-20,Math.min(120,start.startY+(event.clientY-start.y)/start.height*100))})
+    }
+    const stopDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+        if(drag.current?.pointer===event.pointerId) drag.current=null
+        if(event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+
     const chooseForeground = (file: File | undefined) => {
         if (!file || !file.type.startsWith('image/')) return
         setForeground(file)
+        setLayerDepth(null)
+        setDepthProgress('')
     }
     const chooseDepth = (file: File | undefined) => {
         if (!file || !file.type.startsWith('image/')) return
@@ -395,7 +443,7 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
             <section className="layeredControls">
                 <div className="layeredFiles">
                     <div><strong>Foreground object</strong><span>{foreground?.name || 'Transparent PNG/WebP recommended'}</span><button onClick={() => foregroundInput.current?.click()}><UiIcon name="upload" /> {foreground ? 'Replace foreground' : 'Choose foreground'}</button>{foreground && <button onClick={() => setForeground(null)}><UiIcon name="close" /> Remove</button>}</div>
-                    <div><strong>Optional object depth</strong><span>{layerDepth?.name || 'Grayscale image aligned to foreground'}</span><button onClick={() => depthInput.current?.click()}><UiIcon name="upload" /> {layerDepth ? 'Replace object depth' : 'Choose object depth'}</button>{layerDepth && <button onClick={() => setLayerDepth(null)}><UiIcon name="close" /> Remove</button>}</div>
+                    <div><strong>Optional object depth</strong><span>{layerDepth?.name || 'Grayscale image aligned to foreground'}</span><button onClick={() => depthInput.current?.click()}><UiIcon name="upload" /> {layerDepth ? 'Replace object depth' : 'Choose object depth'}</button><button type="button" disabled={!foreground || depthBusy} onClick={() => void generateForegroundDepth()}>{depthBusy?'Generating AI depth…':'Generate AI depth for object'}</button><small aria-live="polite">{depthProgress}</small>{layerDepth && <button onClick={() => setLayerDepth(null)}><UiIcon name="close" /> Remove</button>}</div>
                     <input ref={foregroundInput} type="file" accept="image/png,image/webp,image/jpeg" onChange={event => { chooseForeground(event.target.files?.[0]); event.currentTarget.value = '' }} />
                     <input ref={depthInput} type="file" accept="image/png,image/webp,image/jpeg" onChange={event => { chooseDepth(event.target.files?.[0]); event.currentTarget.value = '' }} />
                 </div>
@@ -424,8 +472,8 @@ function LayeredCompositeBuilder({ isDepthMapReady, setProcessingStage }: Props)
 
             <section className="layeredOutput">
                 <div className="layeredOutputHeader"><div><span className="panelLabel">OUTPUT</span><strong>{mode === 'anaglyph' ? 'Anaglyph · current glasses profile' : mode === 'parallel' ? 'Parallel stereo' : mode === 'cross' ? 'Cross-eyed stereo' : mode === 'left' ? 'Left eye' : 'Right eye'}</strong></div><span>{loading ? 'Rendering…' : isDepthMapReady ? 'Ready' : 'Waiting'}</span></div>
-                <div className="layeredModes"><button className={mode==='anaglyph'?'active':''} onClick={()=>setMode('anaglyph')}>Anaglyph</button><button className={mode==='parallel'?'active':''} onClick={()=>setMode('parallel')}>Parallel</button><button className={mode==='cross'?'active':''} onClick={()=>setMode('cross')}>Cross-Eyed</button><button className={mode==='left'?'active':''} onClick={()=>setMode('left')}>Left</button><button className={mode==='right'?'active':''} onClick={()=>setMode('right')}>Right</button></div>
-                <div className="layeredPreview" ref={previewRef}>{previewUrl ? <img src={previewUrl} alt="Layered 3D composite"/> : <div><strong>Layered composite preview</strong><span>The current base stereo scene appears here. Add a foreground object when ready.</span></div>}{loading && <div className="layeredBusy">Rendering…</div>}</div>
+                <small className="layeredDragHint">{foreground ? 'Drag on the preview to move the object in X/Y. Use Depth position for Z.' : 'Add a foreground PNG to enable direct positioning.'}</small><div className="layeredModes"><button className={mode==='anaglyph'?'active':''} onClick={()=>setMode('anaglyph')}>Anaglyph</button><button className={mode==='parallel'?'active':''} onClick={()=>setMode('parallel')}>Parallel</button><button className={mode==='cross'?'active':''} onClick={()=>setMode('cross')}>Cross-Eyed</button><button className={mode==='left'?'active':''} onClick={()=>setMode('left')}>Left</button><button className={mode==='right'?'active':''} onClick={()=>setMode('right')}>Right</button></div>
+                <div className={foreground ? "layeredPreview layeredDraggable" : "layeredPreview"} ref={previewRef} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} title={foreground ? "Drag to position foreground in X and Y" : undefined}>{previewUrl ? <img src={previewUrl} alt="Layered 3D composite"/> : <div><strong>Layered composite preview</strong><span>The current base stereo scene appears here. Add a foreground object when ready.</span></div>}{loading && <div className="layeredBusy">Rendering…</div>}</div>
                 <div className="layeredActions"><button onClick={() => previewRef.current?.requestFullscreen?.()} disabled={!previewUrl}><UiIcon name="expand" /> Fullscreen</button><button onClick={() => void download()} disabled={!isDepthMapReady || downloading}>{downloading ? 'Preparing full resolution…' : <><UiIcon name="download" /> Download full-resolution PNG</>}</button></div>
                 {error && <div className="layeredError">{error}</div>}
                 <p className="layeredFine">Foreground alpha is preserved while the object is synthesized separately for each eye. A layer depth map is optional; without one, the object remains a flat stereo card at the selected depth position. Save Project embeds this foreground, its optional depth map, and all compositor settings so you can reopen the setup later. Multiple independent foreground layers are still the next compositor step.</p>
